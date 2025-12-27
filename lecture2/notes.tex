@@ -1,0 +1,342 @@
+\documentclass{../juni}
+
+\author{Juni Kim}
+\title{Lecture 2 Handout}
+\date{January 21, 2026}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\newpage
+
+\section{On Make}
+
+\subsection{Parallelizing Make}
+
+We strongly encourage you to enable parallelization in your build scripts.
+If you allow for compilation with a certain number of jobs, make will distribute
+the work so that all artifacts are built in the correct order. As discussed in
+lecture, we recommend should use \texttt{make -j\$(nproc)}. nproc is a program that will
+roughly tell you how many cpu cores you have on your system.
+
+\subsection{Notice about working directories}
+
+Make is also sensitive to the current working directory. By default, it looks
+for a \texttt{Makefile} in the current directory and interprets all relative
+paths with respect to that directory.
+
+To avoid relying on the caller’s working directory, make provides the
+\texttt{-C} option, which instructs make to change directories before reading
+the Makefile:
+
+\begin{lstlisting}[language=bash]
+make -C /path/to/source
+\end{lstlisting}
+
+This is functionally equivalent to:
+
+\begin{lstlisting}[language=bash]
+cd /path/to/source
+make
+\end{lstlisting}
+
+but is preferred in scripts because it avoids modifying global shell state and
+makes directory assumptions explicit.
+
+The \texttt{-C} option composes cleanly with other make options and variable
+assignments:
+
+\begin{lstlisting}[language=bash]
+make -C "/kernel/source/dir" O="/kernel/build" -j8
+\end{lstlisting}
+
+In this course, the use of \texttt{make -C} is strongly encouraged whenever you
+are invoking make on a source tree that is not the script’s current working
+directory. This ensures build scripts remain working-directory invariant and
+robust to changes in how they are invoked.
+
+\subsection{Deeper Dive into how make works}
+
+This course does not expect you to write Makefiles, but it is hoped that this
+section aids in understanding how make gets used.
+
+Make operates over a declarative configuration language, usually written in a
+file called \texttt{Makefile}. A Makefile consists of \emph{targets}, their
+\emph{dependencies}, and the \emph{commands} needed to produce those targets.
+
+A minimal example looks like this:
+
+\begin{lstlisting}[language=make]
+output.o: input.c
+	gcc -c input.c -o output.o
+\end{lstlisting}
+
+Here, \texttt{output.o} is the target, \texttt{input.c} is a dependency, and the
+indented line is the command that produces the target. Make will only run the
+command if the target does not exist or is older than one of its dependencies.
+
+Targets are resolved recursively. When you invoke \texttt{make}, it selects a
+\emph{default target}, which is simply the \textbf{first target listed} in the
+Makefile, and attempts to build it by first building all of its dependencies.
+
+Makefiles also support variables. Variables can be defined inside the Makefile:
+
+\begin{lstlisting}[language=make]
+CC = gcc
+CFLAGS = -O2
+\end{lstlisting}
+
+and referenced using \texttt{\$(VAR)}. Variables may be overridden either via
+environment variables or via arguments passed directly to make:
+
+\begin{lstlisting}[language=bash]
+make CC=clang CFLAGS="-O0 -g"
+# the top and bottom do the same thing, given the Makefile does not override variables.
+export CC=clang CFLAGS="-O0 -g"
+make
+\end{lstlisting}
+
+Variables passed on the command line take precedence over those defined in the
+Makefile. This is how flags such as \texttt{CFLAGS}, \texttt{CPPFLAGS}, and
+\texttt{LDFLAGS} are commonly injected into third-party build systems.
+
+Some targets do not represent real files. These are marked as \texttt{.PHONY}
+targets to prevent make from becoming confused if a file with the same name
+exists. A common example is \texttt{clean}:
+
+\begin{lstlisting}[language=make]
+.PHONY: clean
+clean:
+	rm -rf build
+\end{lstlisting}
+
+Without \texttt{.PHONY}, make may incorrectly believe the target is already
+up-to-date and skip the command.
+
+\subsection{Debugging Tools}
+
+When debugging build failures or runtime issues related to dependency
+management, it is often necessary to inspect the resulting binaries directly.
+
+The \texttt{nm} utility lists symbols contained in object files or binaries.
+This is useful when diagnosing unresolved symbols or confirming that a binary
+was linked against the expected implementation of a function.
+
+\begin{lstlisting}[language=bash]
+nm mybinary | grep malloc
+\end{lstlisting}
+
+The \texttt{ldd} command lists dynamic dependencies of an executable. Note that
+\texttt{ldd} works by invoking the program's dynamic linker; it does \emph{not}
+simply read metadata. As a result, it may fail if the dynamic linker path is
+incorrect or missing.
+
+If \texttt{ldd} prints:
+
+\begin{verbatim}
+	not a dynamically linked executable
+\end{verbatim}
+
+This indicates a statically linked binary, which is expected and acceptable in
+this course.
+
+If \texttt{ldd} reports a dynamic linker path associated with glibc (for example
+\texttt{/lib64/ld-linux-x86-64.so.2}), you are almost certainly mixing host and
+target libc environments, which will lead to runtime failures.
+
+For safer inspection, you can use \texttt{readelf} to inspect ELF headers
+without executing the binary:
+
+\begin{lstlisting}[language=bash]
+readelf -l mybinary
+\end{lstlisting}
+
+This allows you to verify the interpreter (dynamic linker) path and other ELF
+metadata directly.
+
+\subsection{Dynamic Linking}
+
+You are not expected to build dynamically linked binaries in this course, but
+this section exists to help you understand them better.
+
+Dynamic linking refers to resolving library dependencies at runtime rather than
+embedding all required code into the executable at link time. When building
+shared libraries, the compiler is typically invoked with the \texttt{-shared}
+flag, producing \texttt{.so} files instead of static \texttt{.a} archives.
+
+Executables that are dynamically linked contain ELF metadata that specifies an
+absolute path to the dynamic linker. This path is fixed at link time and must
+exist on the system where the binary is executed.
+
+For example, glibc-linked binaries typically reference:
+
+\begin{verbatim}
+/lib64/ld-linux-x86-64.so.2
+\end{verbatim}
+
+while musl-linked binaries reference a different absolute path, such as:
+
+\begin{verbatim}
+/lib/ld-musl-x86_64.so.1
+\end{verbatim}
+
+Because this path is absolute and fixed, dynamically linked binaries are tightly
+coupled to the filesystem layout of the system they were built for.
+
+The \texttt{LD\_LIBRARY\_PATH} environment variable can be used to influence where
+the dynamic linker searches for shared libraries at runtime. This mechanism is
+primarily intended for debugging and should be used sparingly, as it introduces
+implicit and global state.
+
+In this course, you are not required to rely on dynamic linking, but understanding
+how it works is helpful when interpreting linker errors, runtime failures, or
+unexpected host contamination.
+
+\newpage
+\section{Build system exceptions}
+
+You can expect many of the software packages in our class to use the autoconf
+conventions as described in class. Below are the notable exceptions.
+
+\subsection{Kernel Headers}
+
+You will almost certainly have to preemptively install the Linux headers
+(compiling Busybox may require those headers). Header installation follows the
+conventions below. Most important to notice are how we supply \texttt{O} and
+\texttt{INSTALL\_HDR\_PATH} as options to make.
+
+\begin{lstlisting}[language=bash]
+make -C "/kernel/source" O="/kernel/build/directory" INSTALL_HDR_PATH="/path/to/your/install/prefix" headers_install
+\end{lstlisting}
+
+\subsection{The Kernel}
+
+Building up the kernel requires generating a config first, which you can do by
+running \texttt{make menuconfig}. Once you save all your options, you should get
+a \texttt{.config} file which you can then copy into your own codebase so you
+can automatically copy it over later.
+
+Note that the above step is not optional, as our automated scripts will run with
+the assumption your build scripts inject a \texttt{.config} into the kernel
+build tree.
+
+Likewise, for building up the kernel, you can do something similar (with the
+\texttt{\{your target\}} placeholder being replaced with something or nothing at
+all if you want the default target)
+
+\begin{lstlisting}[language=bash]
+make -C "/kernel/source" O="/kernel/build/directory" {your target}
+\end{lstlisting}
+
+There is no separate \texttt{make install} for the kernel; you have to fish out
+the kernel image from the kernel build directory. For x86, you should expect
+your kernel to be at \texttt{\$KERNEL\_BUILD\_DIR/arch/x86/boot/bzImage}, while
+for aarch64, your kernel will be at
+\texttt{\$KERNEL\_BUILD\_DIR/arch/arm64/boot/Image}.
+
+\subsection{Busybox}
+
+Busybox has a similar \texttt{make menuconfig} convention for generating a
+config. Just like the kernel, you can \texttt{make menuconfig}, save your
+options, and copy the newly created \texttt{.config} file into your own codebase
+for copying later.
+
+When installing busybox you use \texttt{CONFIG\_PREFIX} instead of
+\texttt{DESTDIR}, as shown below:
+
+\begin{lstlisting}[language=bash]
+make install CONFIG_PREFIX=/path/to/your/rootfs
+\end{lstlisting}
+
+\newpage
+
+\section{Exiting out of QEMU}
+
+Press ctrl-a, followed by x while inside the qemu window. This will
+automatically quit qemu. Once you have a real filesystem you should probably use
+\texttt{/bin/poweroff} instead.
+
+\section{QEMU Invocation and Architecture Differences}
+
+QEMU emulates hardware, not an operating system. As a result, different CPU
+architectures require different machine models, firmware, and device options.
+The commands below reflect the minimal sets of options required to boot systems
+in this course.
+
+If you are on x86, you should use \texttt{qemu-system-x86\_64}, and if you are
+on arm you should use \texttt{qemu-system-aarch64}.
+
+\subsection{Booting Directly with the Kernel}
+
+In early stages of development, it is often convenient to boot QEMU directly
+into a kernel without using firmware or a disk image.
+
+\paragraph{Common Options}
+
+\begin{itemize}
+  \item \texttt{-m 1024} sets the amount of guest memory (in MB).
+  \item \texttt{-kernel <path>} specifies the kernel binary to boot directly.
+  \item \texttt{-nographic} disables graphical output and routes the console to
+        the terminal.
+  \item \texttt{-no-reboot} causes QEMU to exit instead of restarting on failure.
+\end{itemize}
+
+\paragraph{aarch64-Specific Options}
+
+\begin{itemize}
+  \item \texttt{-machine virt} selects a generic virtual ARM machine model.
+  \item \texttt{-cpu cortex-a72} selects a CPU model supported by the kernel.
+  \item \texttt{-net nic -net user} enables basic user-mode networking.
+\end{itemize}
+
+\paragraph{x86\_64-Specific Options}
+
+\begin{itemize}
+  \item \texttt{-machine q35} selects a modern PCIe-based x86 machine model.
+  \item \texttt{-append "console=ttyS0"} directs kernel output to the serial
+        console used by \texttt{-nographic} (it's sent to the kernel as a
+        command line parameter).
+  \item \texttt{-netdev user,id=net0} and \texttt{-device virtio-net-pci}
+        configure a virtual network interface.
+\end{itemize}
+
+When booting directly with \texttt{-kernel}, the kernel is responsible for
+initializing the system without firmware involvement.
+
+\subsection{Booting from Disk Using Firmware}
+
+Once a full disk image has been constructed, QEMU should be run using firmware
+to more closely resemble a real system boot.
+
+\paragraph{Firmware Options}
+
+\begin{itemize}
+  \item \texttt{-drive if=pflash,readonly=on,file=...CODE...} provides the
+        read-only firmware image.
+  \item \texttt{-drive if=pflash,file=...VARS...} provides writable firmware
+        state (EFI variables).
+\end{itemize}
+
+The firmware binaries differ by architecture:
+\begin{itemize}
+  \item aarch64 uses \texttt{AAVMF\_CODE.fd} and \texttt{AAVMF\_VARS.fd}.
+  \item x86\_64 uses \texttt{OVMF\_CODE\_4M.fd} and \texttt{OVMF\_VARS\_4M.fd}.
+\end{itemize}
+
+\paragraph{Disk and Console Options}
+
+\begin{itemize}
+  \item \texttt{-drive if=virtio,format=raw,file=<image>} attaches the bootable
+        disk image.
+  \item \texttt{-serial mon:stdio} multiplexes the serial console and QEMU
+        monitor onto standard I/O.
+  \item \texttt{-nographic} disables graphical output.
+\end{itemize}
+
+When booting via firmware, the kernel is loaded from disk by the firmware rather
+than passed directly by QEMU.
+
+\end{document}

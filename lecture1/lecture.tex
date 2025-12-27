@@ -1,0 +1,314 @@
+\documentclass{../lecture}
+
+\title{Lecture 1}
+\date{January 20, 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}{Course Logistics}
+  \begin{itemize}
+    \item \textbf{Registered Students}: Final Assignment due Friday January 30,
+      11:59PM, no extensions
+    \item Website at \url{https://junic.kim/en/6s913}
+    \item Communication over Piazza \url{https://piazza.com/mit/spring2026/6s913}
+    \item Lectures on Tuesday, Wednesday, Friday, Monday, Thursday
+    \item Note on AI: it's everywhere, aim to use it like a search
+      engine or to assist in debugging work. Agentic IDE's are discouraged.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Course Goals}
+  \begin{itemize}
+    \item More than a Linux usage course, but not an OS course (comparatively
+      little kernel material)
+    \item Assignment: compose a build system for a Linux-based OS
+    \item Reasoning out bugs and writing deterministic programs in a stateful
+      environment (hostile to deterministic behavior)
+    \item Along the way, understand the most basic components of a modern
+      operating system
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Your Lecturer}
+  \begin{itemize}
+    \item Sophomore majoring 6-5
+    \item Got hooked onto Vim and Linux in freshman year of high school
+    \item Did mostly Web and Linux stuff in high school, branching out interests
+      now
+    \item Wrote Mimux last summer as a stunt, inspiration for the course :)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Today's Lecture}
+  \begin{itemize}
+    \item Writing ``correct'' shell scripts that are defensive to external
+      state.
+    \item Host vs Target distinction
+    \item The role of Docker (host system standardization)
+  \end{itemize}
+\end{frame}
+
+\section{Shell Scripts and State}
+
+\begin{frame}{State}
+  \begin{itemize}
+    \item The shell is your main interface with the operating system.
+    \item Usually you interface via the CLI, but you can automate this with
+      scripts.
+    \item Side effects are the \textbf{entire point} of shell scripts.
+      \begin{block}{External State}
+        \begin{itemize}
+          \item Working Directory (!!!!)
+          \item Filesystem contents
+          \item Environment variables passed by the system
+        \end{itemize}
+      \end{block}
+    \item Do not assume shell scripts are like 6.101 assignments.
+    \item You are responsible for writing your own reset button.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{A Tale of Two Scripts}
+\begin{onlyenv}
+\begin{lstlisting}[language=python]
+#!/usr/bin/env python3
+def sumn(n):
+  return (n * (n+1))//2
+print(sumn(int(input("number: "))))
+\end{lstlisting}
+\end{onlyenv}
+
+\lstinputlisting[language=bash]{badscript.sh}
+\end{frame}
+
+\section{Running Processes}
+
+\begin{frame}[fragile]{Commands as Programs}
+\begin{itemize}
+  \item Most commands are \textbf{Programs on your system}
+  \item They are just shortened for convenience (we'll get to this)
+\begin{lstlisting}[language=bash]
+# same as /bin/mkdir myfolder
+mkdir myfolder
+# same as /usr/bin/gcc (on most linux systems)
+gcc file.c -o file
+\end{lstlisting}
+  \item Successful programs exit with an exit code of 0, non-zero means some
+    error.
+\lstinputlisting[language=bash]{./mkdir-exit-codes.sh}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Working Directory}
+  \begin{itemize}
+    \item Most of the programs and arguments you invoke will be
+      working-directory dependent.
+    \item If you have a  script that is attached to a certain repository,
+      you need to work to prevent this.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Working Directory Demo}
+  \lstinputlisting[language=bash]{wdir-bad.sh}
+  \lstinputlisting[language=bash]{wdir-good.sh}
+\end{frame}
+
+\begin{frame}[fragile]{Pipes and Redirection}
+  \begin{itemize}
+    \item The I/O streams to know are stdin (0), stdout(1), stderr(2)
+    \item These are technically file descriptors.
+    \item You can redirect or pipe program output into the input of another
+      program.
+\begin{lstlisting}[language=bash]
+# count the number of files and output that
+ls | wc -l
+# redirects standard output into a file (truncate file)
+ls | wc -l > count.txt
+# Same as above, except don't truncate
+ls | wc -l >> count.txt
+# this will show two lines.
+cat count.txt
+\end{lstlisting}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Stdout vs Stderr Demo}
+\begin{lstlisting}[language=c]
+// hello.c
+#include <unistd.h>
+int main() {
+  char hello[] = "hello\n";
+  // write to standard output
+  write(1, hello, sizeof(hello));
+  // write to standard error
+  write(2, hello, sizeof(hello));
+}
+\end{lstlisting}
+\begin{lstlisting}[language=bash]
+gcc hello.c -o hello
+# this will output "hello" twice
+/tmp/hello
+# this will output one "hello" and one 1
+/tmp/hello | wc -l
+# this will output 2
+/tmp/hello 2>&1 | wc -l
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Environment Variables}
+\begin{itemize}
+  \item External variable that can influence processes
+  \item Passed from parent to child.
+  \item You can access them as variables when writing shell scripts.
+  \item Ordinary shell variables will not become environment variables unless
+    you use the \texttt{export} keyword.
+  \item You will often manipulate \texttt{PATH}, \texttt{CC}, \texttt{LDFLAGS},
+    and a bunch of other environment variables to get the build results you
+    want.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Environment Variable Demo}
+\begin{lstlisting}[language=bash]
+# reader.sh
+echo "MYENV=$MYENV"
+echo "MYENV2=$MYENV2"
+\end{lstlisting}
+\begin{lstlisting}[language=bash]
+# tester.sh
+DIR="$(realpath "$(dirname "$0" )" )"
+
+MYENV=hello
+export MYENV2=hello2
+
+# you will get MYENV= (not passed) and MYENV2=hello2 (passed)
+"$DIR/reader.sh"
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{So what is PATH?}
+  \begin{itemize}
+    \item The bane of intro CS students trying to set up their environments
+    \item Basically tells you which executables you can shorthand.
+    \item Use \texttt{command -v} to figure out which executable is being
+      called.
+    \item A colon-separated series of paths which the shell will lookup.
+  \item Homebrew, Virtual Envs, Conda, \dots do their thing by messing with this
+    variable!
+  \end{itemize}
+\begin{lstlisting}[language=bash]
+export PATH="/usr/bin:/bin"
+# bash will search /usr/bin/myprogram, followed by /bin/myprogram.
+myprogram
+# you can see whether it is /usr/bin/myprogram
+command -v myprogram
+export PATH="/my/installation:/usr/bin:/bin"
+# now bash will search /my/installation first.
+command -v myprogram
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Control Flow}
+  \begin{itemize}
+    \item if, for, and while all exist
+    \item conditionals are determined by exit code
+    \item You probably want to use \texttt{\&\&} and \texttt{||} more
+    \item Functions have no scope! They just help section code
+    \item \texttt{test} can be used to check for file existence.
+  \end{itemize}
+\begin{lstlisting}[language=bash]
+if ! test -f myfile.txt; then
+  echo 'hello' > myfile.txt
+fi
+# below does the same thing as above
+! test -f myfile.txt && echo 'hello' > myfile.txt
+# so does below
+test -f myfile.txt || echo 'hello' > myfile.txt
+\end{lstlisting}
+\end{frame}
+
+\section{Defensive Scripting}
+
+\begin{frame}{A Tale of Two Scripts: Part 2}
+So what's wrong with the below?
+\lstinputlisting[language=bash]{badscript.sh}
+
+\only<2->{
+\begin{itemize}
+  \item<2-> dependent on the script invoker's working directory!
+  \item<3-> mkdir or grep not found (The user screwed up \texttt{\$PATH})
+  \item<4->errors propagate (no ``exceptions'' unless forced)
+  \item<4->Bonus: \texttt{/bin/bash} is not standard! Only \texttt{/bin/sh} is.
+    There are systems that don't have \texttt{/bin/bash}
+\end{itemize}
+}
+\end{frame}
+
+\begin{frame}[fragile]{A More Defensive Script}
+\lstinputlisting[language=bash]{goodscript.sh}
+
+\begin{block}{Design Decisions}
+\begin{itemize}
+  \item Do we want silent failure or be loud?
+  \item Do we destroy history of result? (\texttt{>} versus \texttt{>>})
+  \item We just need to be deliberate with what behavior we allow
+\end{itemize}
+\end{block}
+\end{frame}
+
+\begin{frame}{Some General Principles}
+  \begin{itemize}
+    \item Even if a script works, you need to be skeptical.
+    \item If your entire working environment and build artifacts were destroyed
+      and then reconstructed, your script must still work or error cleanly.
+  \end{itemize}
+\end{frame}
+
+\section{Host vs Target Systems}
+
+\begin{frame}[fragile]{Host vs Target}
+  \begin{itemize}
+    \item Will be a huge part of lab pain
+    \item You are on a \textbf{Host System}, building artifacts that will go in
+      a separate \textbf{Target System} (Blackboard time)
+    \item The target system must be wholly self-sufficient. No dependence on:
+      \begin{itemize}
+        \item Host libraries (This one's subtle), \textbf{especially the libc}
+        \item Host services
+        \item Host configuration files
+      \end{itemize}
+    \item You need to carefully manipulate environment variables and options
+      because cross-compiling is not assumed!
+\begin{lstlisting}[language=bash]
+# in some source directory
+export CC="/path/to/custom/cc"
+export CFLAGS="-nostdinc -I/custom/include/prefix -static"
+export LDFLAGS="-L/custom/lib/prefix -static"
+./configure --prefix="/usr"
+make
+make install DESTDIR="/path/to/your/rootfs"
+\end{lstlisting}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Docker}
+  \begin{itemize}
+    \item Containerization platform we will be using for the class.
+    \item Everyone will be working on a standard Debian Linux environment.
+    \item This standardizes the \textbf{host} compiling system.
+    \item Please consult the assignment README for further instructions on usage.
+    \item Live Demo! (Image pull, container start, monitoring, deletion)
+  \end{itemize}
+  \begin{block}{Image vs Container}
+    \begin{itemize}
+      \item A container is a process managed by docker with its own view of the
+        filesystem, network, and so on.
+      \item An image is the template for a container.
+      \item You build images and then run containers based off that image.
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\end{document}

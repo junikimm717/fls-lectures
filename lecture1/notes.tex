@@ -1,0 +1,347 @@
+\documentclass{../juni}
+
+\author{Juni Kim}
+\title{Lecture 1 Handout}
+\date{January 20, 2026}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\newpage
+
+\section{Shell Script Execution Basics}
+
+This section covers execution details that are easy to miss in lecture but
+cause many confusing failures.
+
+\subsection{Shebangs}
+
+A shell script is executed by the kernel, not by your shell. The first line
+(the \textbf{shebang}) determines which interpreter is used.
+
+\begin{lstlisting}[language=bash]
+#!/usr/bin/env bash
+\end{lstlisting}
+
+Important points:
+\begin{itemize}
+  \item The kernel reads the shebang and invokes the interpreter.
+  \item \texttt{/usr/bin/env bash} is preferred over \texttt{/bin/bash}.
+  \item \texttt{/bin/bash} is not guaranteed to exist on all systems.
+  \item \texttt{/bin/sh} is the only interpreter required by POSIX.
+\end{itemize}
+
+If the shebang is missing or invalid, execution will fail even if the file
+exists.
+
+\subsection{Executable Bit}
+
+A script must be marked executable to be run directly:
+
+\begin{lstlisting}[language=bash]
+chmod +x script.sh
+./script.sh
+\end{lstlisting}
+
+Contrast with:
+
+\begin{lstlisting}[language=bash]
+bash script.sh
+\end{lstlisting}
+
+Running with \texttt{bash script.sh} bypasses the shebang entirely. If a script
+only works this way, it may fail in grading or CI.
+
+\subsection{\texttt{\$0}, \texttt{dirname}, and \texttt{realpath}}
+
+Inside a script, \texttt{\$0} expands to how the script was invoked, not
+necessarily its absolute path.
+
+Common defensive pattern:
+
+\begin{lstlisting}[language=bash]
+DIR="$(realpath "$(dirname "$0")")"
+\end{lstlisting}
+
+This allows scripts to:
+\begin{itemize}
+  \item locate files relative to themselves
+  \item be run from any working directory
+  \item avoid reliance on caller state
+\end{itemize}
+
+\newpage
+\section{Variables and Quoting}
+
+This section covers variable behavior and quoting rules that frequently cause
+subtle bugs.
+
+\subsection{Shell Variables vs Environment Variables}
+
+Shell variables are local to the shell. Environment variables are inherited by
+child processes.
+
+\begin{lstlisting}[language=bash]
+FOO=hello        # shell variable
+export BAR=world # environment variable
+\end{lstlisting}
+
+Only exported variables are visible to programs you run.
+
+\subsection{Capturing Command Output}
+
+Use command substitution to capture stdout:
+
+\begin{lstlisting}[language=bash]
+FILES="$(ls)"
+COUNT="$(ls | wc -l)"
+\end{lstlisting}
+
+Exit codes are \textbf{not} captured—only stdout.
+
+\subsection{Quoting and Word Splitting}
+
+Unquoted variables are split on whitespace.
+
+\begin{lstlisting}[language=bash]
+FILE="my file.txt"
+rm $FILE      # WRONG: expands to two arguments
+rm "$FILE"    # correct
+\end{lstlisting}
+
+Rule of thumb:
+\begin{quote}
+Quote variables unless you explicitly want splitting.
+\end{quote}
+
+\subsection{Globbing}
+
+Globs (\texttt{*}, \texttt{?}, \texttt{[...]}) expand \textbf{before} program
+execution.
+
+\begin{lstlisting}[language=bash]
+echo *.txt
+\end{lstlisting}
+
+If no files match, the glob may remain unexpanded, depending on shell settings.
+
+\newpage
+\section{Shell Misc I: Control Flow Footguns}
+
+This section covers control-flow behaviors that are often misunderstood.
+
+\subsection{Exit Codes}
+
+Every command returns an exit code:
+\begin{itemize}
+  \item \texttt{0} = success
+  \item non-zero = failure
+\end{itemize}
+
+The shell variable \texttt{\$?} contains the last exit code.
+
+\subsection{\texttt{\&\&} and \texttt{||}}
+
+\begin{lstlisting}[language=bash]
+cmd1 && cmd2   # cmd2 runs only if cmd1 succeeds
+cmd1 || cmd2   # cmd2 runs only if cmd1 fails
+\end{lstlisting}
+
+These operators are driven entirely by exit codes.
+
+\subsection{\texttt{test}, \texttt{true}, and \texttt{false}}
+
+\begin{lstlisting}[language=bash]
+test -f file.txt
+[ -d somedir ]
+true
+false
+\end{lstlisting}
+
+\texttt{test} and \texttt{[ ]} are just commands that return exit codes.
+
+Negation inverts exit status:
+
+\begin{lstlisting}[language=bash]
+! test -e file.txt
+\end{lstlisting}
+
+\newpage
+\section{Shell Misc II: Defensive Defaults}
+
+This section covers defaults and patterns expected in this course.
+
+\subsection{\texttt{set -euo pipefail}}
+
+Recommended at the top of scripts:
+
+\begin{lstlisting}[language=bash]
+set -euo pipefail
+\end{lstlisting}
+
+Effects:
+\begin{itemize}
+  \item \texttt{-e}: exit on unhandled error
+  \item \texttt{-u}: error on use of unset variables
+  \item \texttt{pipefail}: pipelines fail if any command fails
+\end{itemize}
+
+Caveats:
+\begin{itemize}
+  \item \texttt{-e} does not trigger inside all conditionals
+  \item control-flow semantics change subtly
+  \item this is not a substitute for careful reasoning
+\end{itemize}
+
+\subsection{Idempotent Filesystem Operations}
+
+Filesystem state persists across runs. Scripts must tolerate re-execution.
+
+Prefer:
+
+\begin{lstlisting}[language=bash]
+mkdir -p output
+rm -f temp.txt
+\end{lstlisting}
+
+Be deliberate about:
+\begin{itemize}
+  \item \texttt{>} vs \texttt{>>}
+  \item overwriting vs appending
+  \item cleanup on failure
+\end{itemize}
+
+Rule:
+\begin{quote}
+If you did not create it in the script, do not assume it exists.
+\end{quote}
+
+\newpage
+\section{Docker}
+
+Docker is used to standardize the \textbf{host system}. It does not eliminate
+the host/target distinction.
+
+\subsection{Docker Images}
+
+An image is a filesystem snapshot plus metadata.
+
+Key ideas:
+\begin{itemize}
+  \item Images are built from Dockerfiles.
+  \item Images are immutable once built.
+  \item Building an image does not run your program.
+\end{itemize}
+
+\begin{lstlisting}[language=bash]
+docker build -t myimage .
+\end{lstlisting}
+
+\subsection{Docker Containers and Volumes}
+
+A container is a running instance of an image.
+
+\begin{lstlisting}[language=bash]
+docker run -it myimage
+\end{lstlisting}
+
+Volumes and bind mounts allow sharing directories with the host:
+
+\begin{lstlisting}[language=bash]
+docker run -it -v "$PWD:/work" myimage
+\end{lstlisting}
+
+Important:
+\begin{itemize}
+  \item Mounted directories are shared mutable state.
+  \item Files created in the container may persist on the host.
+  \item Deleting a container does not delete volumes.
+\end{itemize}
+
+For debugging:
+\begin{itemize}
+  \item Containers can be stopped and restarted.
+  \item Images must be rebuilt to change their contents.
+\end{itemize}
+
+\subsection{Inspecting and Managing Containers}
+
+Docker keeps track of containers independently of your shell. A very common
+source of confusion is forgetting which containers are running.
+
+\subsubsection{\texttt{docker ps}}
+
+The command \texttt{docker ps} lists \textbf{currently running containers}:
+
+\begin{lstlisting}[language=bash]
+$ docker ps
+CONTAINER ID   IMAGE        COMMAND                  CREATED         STATUS         PORTS     NAMES
+a3c1f4b92d3e   debian:12    "/bin/bash"              3 minutes ago   Up 3 minutes             hopeful_morse
+\end{lstlisting}
+
+Important columns:
+\begin{itemize}
+  \item \texttt{CONTAINER ID}: unique identifier (shortened hash)
+  \item \texttt{IMAGE}: image the container was created from
+  \item \texttt{COMMAND}: entrypoint / command being run
+  \item \texttt{STATUS}: whether the container is running
+  \item \texttt{NAMES}: human-readable name (auto-generated if not specified)
+\end{itemize}
+
+To see \textbf{all containers}, including stopped ones:
+
+\begin{lstlisting}[language=bash]
+docker ps -a
+\end{lstlisting}
+
+Stopped containers still exist and still consume metadata until removed.
+
+\subsubsection{Stopping Containers}
+
+To stop a running container:
+
+\begin{lstlisting}[language=bash]
+docker stop hopeful_morse
+\end{lstlisting}
+
+You may also use the container ID:
+
+\begin{lstlisting}[language=bash]
+docker stop a3c1f4b92d3e
+\end{lstlisting}
+
+Stopping a container sends a termination signal to the process inside.
+
+\subsubsection{Removing Containers}
+
+To permanently delete a container:
+
+\begin{lstlisting}[language=bash]
+docker rm hopeful_morse
+\end{lstlisting}
+
+Only stopped containers can be removed. To stop and remove in one step:
+
+\begin{lstlisting}[language=bash]
+docker rm -f hopeful_morse
+\end{lstlisting}
+
+This is often useful during development.
+
+\subsubsection{Common Pitfalls}
+
+\begin{itemize}
+  \item Exiting a shell inside a container does not delete the container.
+  \item Containers can accumulate if not explicitly removed.
+  \item Volumes and bind mounts persist even after containers are deleted.
+\end{itemize}
+
+Rule of thumb:
+\begin{quote}
+If something strange is happening, run \texttt{docker ps -a} first.
+\end{quote}
+
+\end{document}

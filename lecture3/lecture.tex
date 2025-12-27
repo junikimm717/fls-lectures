@@ -1,0 +1,32 @@
+\documentclass{../lecture}
+
+\title{Lecture 3}
+\date{January 23, 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Virtual Hardware and Booting}
+
+\begin{frame}{What is QEMU?}
+  \begin{itemize}
+    \item An emulator that virtualizes the hardware (different from containers!)
+    \item Sometimes used to run binaries for other architectures.
+    \item We can test run kernels, firmware, etc.
+    \item Drivers for virtual hardware are readily available and much simpler
+      than real hardware.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{What is an initramfs?}
+  \begin{itemize}
+    \item An archive that the kernel unpacks when first booting (usually in the
+      form of a cpio file).
+    \item MUST contain an executable script at \texttt{/init}
+    \item This gives you the opportunity to mount filesystems and switch root to
+      a filesystem on your disk (later lecture!).
+  \end{itemize}
+\end{frame}
+
+\end{document}
