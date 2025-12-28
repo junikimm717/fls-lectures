@@ -34,18 +34,6 @@
   qemu actually works.
 \end{frame}
 
-\begin{frame}{Serial Console}
-  \begin{itemize}
-    \item Determines whether you will see output on your screen :)
-    \item Correspond to physical devices on the motherboard and require drivers
-      (usually baked into the kernel).
-    \item The kernel does \emph{not} print anywhere unless a console is registered
-    \item Consoles are selected by name via \texttt{console=<tty>} on the kernel command line
-    \item Passing a non-existent console (e.g. \texttt{ttyAMA0} on x86) results in silence
-    \item QEMU emulates serial hardware; the kernel must include the driver
-    \item \texttt{/dev/console} points to whatever console the kernel chose
-  \end{itemize}
-\end{frame}
 
 \section{Kernel related things}
 
@@ -84,18 +72,6 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{The Kernel as an EFI Stub}
-  \begin{itemize}
-    \item Getting ahead, but important to prevent you from recompiling kernel
-      later on.
-    \item We will be bypassing bootloaders like GRUB.
-    \item We will place the kernel binary in a special place on the
-      bootable disk where it can get detected by firmware
-    \item And that firmware will launch the kernel, so we need the kernel to be
-      able to jump start itself.
-  \end{itemize}
-\end{frame}
-
 \begin{frame}{The Kernel Command Line}
   \begin{itemize}
     \item The kernel has no configuration files like \texttt{/etc}.
@@ -112,6 +88,33 @@
       \item Typos usually fail silently.
     \end{itemize}
   \end{block}
+\end{frame}
+
+\begin{frame}{Serial Console}
+  \begin{itemize}
+    \item Determines whether you will see output on your screen :)
+    \item Correspond to physical devices on the motherboard and require drivers
+      (usually baked into the kernel).
+    \item The kernel will probe the system for all device types and register
+      device files corresponding to uart devices.
+    \item The kernel does \emph{not} print anywhere unless a console is registered
+    \item Consoles are selected by name via \texttt{console=<tty>} on the kernel command line
+    \item Passing a non-existent console (e.g. \texttt{ttyAMA0} on x86) results in silence
+    \item QEMU emulates serial hardware; the kernel must include the driver
+    \item \texttt{/dev/console} points to whatever console the kernel chose
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{The Kernel as an EFI Stub}
+  \begin{itemize}
+    \item Getting ahead, but important to prevent you from recompiling kernel
+      later on.
+    \item We will be bypassing bootloaders like GRUB.
+    \item We will place the kernel binary in a special place on the
+      bootable disk where it can get detected by firmware
+    \item And that firmware will launch the kernel, so we need the kernel to be
+      able to jump start itself.
+  \end{itemize}
 \end{frame}
 
 \section{Preparing the Initramfs}
@@ -162,16 +165,14 @@
   \end{block}
 \end{frame}
 
-\begin{frame}{Extra: Serial Devices in \texttt{/sys}}
+\begin{frame}[fragile]{Extra: Serial Devices in \texttt{/sys}}
   \begin{itemize}
-    \item Serial devices appear under:
-      \begin{verbatim}
-      /sys/class/tty/
-      \end{verbatim}
+    \item Serial devices appear under
+      \texttt{/sys/class/tty/}
     \item Each entry links back to its driver and hardware
       \begin{verbatim}
-      /sys/class/tty/ttyS0/device
-      /sys/class/tty/ttyAMA0/device
+/sys/class/tty/ttyS0/device
+/sys/class/tty/ttyAMA0/device
       \end{verbatim}
     \item Which driver created a particular tty?
   \end{itemize}
@@ -195,7 +196,7 @@
     \item E.g. when used as an EFI stub
     \item Can't rely on an external initramfs archive, must have all contents in
       the kernel binary.
-    \item Options in the kernel let you do this.
+    \item Options in the kernel let you do this (see handout).
   \end{itemize}
 \end{frame}
 
