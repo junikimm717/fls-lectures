@@ -160,6 +160,21 @@
   \end{block}
 \end{frame}
 
+\begin{frame}{Serial Devices in \texttt{/sys}}
+  \begin{itemize}
+    \item Serial devices appear under:
+      \begin{verbatim}
+      /sys/class/tty/
+      \end{verbatim}
+    \item Each entry links back to its driver and hardware
+      \begin{verbatim}
+      /sys/class/tty/ttyS0/device
+      /sys/class/tty/ttyAMA0/device
+      \end{verbatim}
+    \item Which driver created a particular tty?
+  \end{itemize}
+\end{frame}
+
 \begin{frame}{What is an initramfs?}
   \begin{itemize}
     \item An archive that the kernel unpacks when first booting (usually in the

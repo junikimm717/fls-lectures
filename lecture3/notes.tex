@@ -64,11 +64,12 @@ The kernel command line may be supplied in one of three ways:
   \item as a built-in default via kernel configuration
 \end{itemize}
 
-We recommend keeping the built-in command line empty and supplying policy via
-QEMU or firmware instead.
+Since QEMU or firmware does not provide command line arguments by default, we
+recommend supplying a default command line.
 
 \begin{verbatim}
-CONFIG_CMDLINE=""
+# please do not cargo cult this
+CONFIG_CMDLINE="console=ttyYourChoice otherkey=option"
 \end{verbatim}
 
 On x86 only, you must also enable:
@@ -79,6 +80,18 @@ CONFIG_CMDLINE_BOOL=y
 
 This option enables the presence of a built-in command line on x86 systems,
 even if it is empty.
+
+\paragraph{Debugging the Command Line}
+
+Assuming you have a working console but are suspicious about what parameters are
+actually being passed to the kernel, you can always call
+
+\begin{lstlisting}[language=bash]
+cat /proc/cmdline
+\end{lstlisting}
+
+This assumes you have the \texttt{/proc} pseudofilesystem mounted on your
+system.
 
 \paragraph{EFI Support}
 
@@ -155,12 +168,6 @@ userspace to work across architectures without modification.
 
 \newpage
 
-\section{Exiting out of QEMU}
-
-Press ctrl-a, followed by x while inside the qemu window. This will
-automatically quit qemu. Once you have a real filesystem you should probably use
-\texttt{/bin/poweroff} instead.
-
 \section{QEMU Invocation and Architecture Differences}
 
 QEMU emulates hardware, not an operating system. As a result, different CPU
@@ -176,6 +183,12 @@ on arm you should use \texttt{qemu-system-aarch64}.
 In early stages of development, it is often convenient to boot QEMU directly
 into a kernel without using firmware or a disk image.
 
+\subsection{Exiting out of QEMU}
+
+Press ctrl-a, followed by x while inside the qemu window. This will
+automatically quit qemu. Once you have a real filesystem, you should probably
+use \texttt{/bin/poweroff} instead.
+
 \paragraph{Common Options}
 
 \begin{itemize}
@@ -184,6 +197,8 @@ into a kernel without using firmware or a disk image.
   \item \texttt{-nographic} disables graphical output and routes the console to
         the terminal.
   \item \texttt{-no-reboot} causes QEMU to exit instead of restarting on failure.
+  \item \texttt{-netdev user,id=net0} and \texttt{-device virtio-net-pci}
+        configure a virtual network interface.
 \end{itemize}
 
 \paragraph{aarch64-Specific Options}
@@ -191,7 +206,6 @@ into a kernel without using firmware or a disk image.
 \begin{itemize}
   \item \texttt{-machine virt} selects a generic virtual ARM machine model.
   \item \texttt{-cpu cortex-a72} selects a CPU model supported by the kernel.
-  \item \texttt{-net nic -net user} enables basic user-mode networking.
   \item \texttt{-append "console=ttyAMA0"} directs kernel output to the serial
         console used by \texttt{-nographic}
 \end{itemize}
@@ -202,8 +216,6 @@ into a kernel without using firmware or a disk image.
   \item \texttt{-machine q35} selects a modern PCIe-based x86 machine model.
   \item \texttt{-append "console=ttyS0"} directs kernel output to the serial
         console used by \texttt{-nographic}
-  \item \texttt{-netdev user,id=net0} and \texttt{-device virtio-net-pci}
-        configure a virtual network interface.
 \end{itemize}
 
 When booting directly with \texttt{-kernel}, the kernel is responsible for
