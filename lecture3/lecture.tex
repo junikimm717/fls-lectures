@@ -30,8 +30,21 @@
       than real hardware.
     \item The kernel \textit{thinks} it's booting on real hardware.
   \end{itemize}
-  You should also check out the lecture 3 handout for more information on how to
-  actually use qemu.
+  You should also check out the lecture 3 handout for more information on how
+  qemu actually works.
+\end{frame}
+
+\begin{frame}{Serial Console}
+  \begin{itemize}
+    \item Determines whether you will see output on your screen :)
+    \item Correspond to physical devices on the motherboard and require drivers
+      (usually baked into the kernel).
+    \item The kernel does \emph{not} print anywhere unless a console is registered
+    \item Consoles are selected by name via \texttt{console=<tty>} on the kernel command line
+    \item Passing a non-existent console (e.g. \texttt{ttyAMA0} on x86) results in silence
+    \item QEMU emulates serial hardware; the kernel must include the driver
+    \item \texttt{/dev/console} points to whatever console the kernel chose
+  \end{itemize}
 \end{frame}
 
 \section{Kernel related things}
@@ -41,15 +54,18 @@
     \item Entire courses dedicated to answering this question!
     \item The kernel is the first program that runs after firmware and never exits.
     \item Privileged code with complete access to all hardware
-    \item Userspace code is at the mercy of the kernel. Gets information through
-      syscalls, talks with other processes via IPC orchestrated by the kernel,
-      \dots
+    \item Userspace code is at the mercy of the kernel (plus or minus security
+      bugs). Gets information through syscalls, talks with other processes via
+      IPC orchestrated by the kernel, \dots
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Compiling the Linux Kernel}
   \begin{itemize}
-    \item Configure the kernel via menuconfig
+    \item Configure the kernel via menuconfig (See handout 2 for information on
+      kernel options)
+    \item See the menu for the menuconfig on top, ? lets you see what option
+      things correspond to
   \end{itemize}
   TODO
 \end{frame}
@@ -103,23 +119,32 @@
     \item You are constructing a filesystem tree that will mirror the filesystem
       tree on your initramfs.
     \item You need to create the directory where your mountpoints will exist.
+    \item You definitely need
+    \begin{itemize}
+      \item \texttt{/usr/include}, \texttt{/usr/lib}, \texttt{/usr/bin} -
+        everything userspace programs
+      \item \texttt{/bin} and \texttt{/sbin} - critical system binaries
+      \item Pseudofilesystem mount points (see next few slides)
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Filesystem Tree and Mount Points}
   \begin{itemize}
-  \item Before userspace runs, the kernel provides no filesystems by default.
-  \item Your init script must mount essential filesystems manually.
-  \item Mount points must exist before mounting.
-  \item You can see mount points by \texttt{lsblk} or \texttt{df -Th}
-\end{itemize}
+    \item Before userspace runs, the kernel provides no filesystems other than
+      the initramfs by default.
+    \item Your init script must mount essential filesystems manually.
+    \item Mount points must exist before mounting.
+    \item You can inspect mount points by \texttt{lsblk} (only block devices) or
+      \texttt{df -Th} (see all filesystems)
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Pseudo Filesystems}
   \begin{itemize}
     \item Exposed by the kernel to interact with userspace
-    \item Main ones are \texttt{/proc}, \texttt{/sys}, \texttt{/dev}, and
-      \texttt{/tmp}.
+    \item Main ones are \texttt{/proc}, \texttt{/sys}, \texttt{/dev},
+      \texttt{/tmp}, and \texttt{/run}.
     \item Tip: you should download useless files to \texttt{/tmp} instead
       of Downloads folder, that way they get erased on reboot!
   \end{itemize}
@@ -129,7 +154,7 @@
       \item \texttt{/dev/zero} - stream of zero bits
       \item \texttt{/dev/null} - black hole (used in scripts to throw away
         output)
-      \item \texttt{/dev/vda, /dev/vda1, \dots} - what your drive will appears
+      \item \texttt{/dev/vda, /dev/vda1, \dots} - what your drive will appear
         as
     \end{itemize}
   \end{block}
@@ -153,6 +178,7 @@
     \item E.g. when used as an EFI stub
     \item Can't rely on an external initramfs archive, must have all contents in
       the kernel binary.
+    \item Options in the kernel let you do this.
   \end{itemize}
 \end{frame}
 

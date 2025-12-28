@@ -23,9 +23,135 @@ cd /scratch/directory
 make -C "/path/to/kernel/src" menuconfig O="/scratch/directory"
 \end{lstlisting}
 
-% TODO: include kernel options, including:
-% how to make the kernel image monolithic, enabling the efi stub, embedding a
-% custom initramfs
+\subsection{Essential Kernel Configuration Options}
+
+For this course, you will build a \emph{monolithic} kernel with a statically
+embedded initramfs. This simplifies early boot debugging and avoids reliance on
+kernel modules or an external root filesystem during bring-up.
+
+\paragraph{Disabling Kernel Modules}
+
+We recommend disabling loadable kernel modules entirely. This ensures all
+drivers required for boot are built directly into the kernel image.
+
+\begin{verbatim}
+CONFIG_MODULES=n
+\end{verbatim}
+
+With this option disabled, the kernel will refuse to load modules at runtime,
+and all required drivers must be enabled as built-ins.
+
+\paragraph{Embedding a Custom Initramfs}
+
+Your initramfs archive should be embedded directly into the kernel image at
+build time. This archive is typically produced using \texttt{cpio} and
+\texttt{gzip}.
+
+\begin{verbatim}
+CONFIG_INITRAMFS_SOURCE="/path/to/archive.cpio.gz"
+\end{verbatim}
+
+When this option is set, the kernel will unpack the archive into a temporary
+root filesystem and execute \texttt{/init} as PID~1.
+
+\paragraph{Kernel Command Line}
+
+The kernel command line may be supplied in one of three ways:
+\begin{itemize}
+  \item explicitly via QEMU using \texttt{-append} when booting with
+        \texttt{-kernel}
+  \item by firmware (EFI) when booting from disk
+  \item as a built-in default via kernel configuration
+\end{itemize}
+
+We recommend keeping the built-in command line empty and supplying policy via
+QEMU or firmware instead.
+
+\begin{verbatim}
+CONFIG_CMDLINE=""
+\end{verbatim}
+
+On x86 only, you must also enable:
+
+\begin{verbatim}
+CONFIG_CMDLINE_BOOL=y
+\end{verbatim}
+
+This option enables the presence of a built-in command line on x86 systems,
+even if it is empty.
+
+\paragraph{EFI Support}
+
+To support booting via UEFI firmware, the kernel must include the EFI stub and
+EFI runtime support.
+
+\begin{verbatim}
+CONFIG_EFI=y
+CONFIG_EFI_STUB=y
+\end{verbatim}
+
+With these options enabled, the kernel can be loaded directly by UEFI firmware
+from disk without an intermediate bootloader.
+
+\subsection{Required Serial Console Drivers}
+
+Your kernel must include built-in drivers for the serial consoles used by the
+virtual machines in this course. Disabling the wrong serial driver will result
+in a silent boot with no visible output.
+
+The following options must \emph{not} be disabled:
+
+\begin{verbatim}
+CONFIG_SERIAL_8250=y
+CONFIG_SERIAL_8250_CONSOLE=y
+\end{verbatim}
+
+The above options provide the legacy PC serial port used by x86 virtual machines,
+which appears as \texttt{/dev/ttyS0}.
+
+\begin{verbatim}
+CONFIG_SERIAL_AMBA_PL011=y
+CONFIG_SERIAL_AMBA_PL011_CONSOLE=y
+\end{verbatim}
+
+The above options provide the ARM PL011 UART used by aarch64 virtual machines,
+which appears as \texttt{/dev/ttyAMA0}.
+
+\subsection{Virtio Device Support}
+
+All virtual machines in this course use \texttt{virtio} devices for storage and
+networking. You must ensure that virtio support is enabled in the kernel.
+
+At a minimum, the following options must remain enabled:
+
+\begin{verbatim}
+CONFIG_VIRTIO=y
+CONFIG_VIRTIO_PCI=y
+CONFIG_VIRTIO_NET=y
+\end{verbatim}
+
+Disabling these options will cause virtual disks or network interfaces to
+silently disappear, even though QEMU successfully emulates the hardware.
+
+\subsection{Console Devices and \texttt{/dev/console}}
+
+The specific serial device used by QEMU depends on the architecture:
+\begin{itemize}
+  \item aarch64 virtual machines use \texttt{/dev/ttyAMA0}
+  \item x86\_64 virtual machines use \texttt{/dev/ttyS0}
+\end{itemize}
+
+Rather than hard-coding one of these device names in userspace, your
+\texttt{/init} script should bind standard input, output, and error to
+\texttt{/dev/console}.
+
+\begin{lstlisting}[language=bash]
+exec 0</dev/console 1>/dev/console 2>/dev/console
+\end{lstlisting}
+
+The kernel dynamically links \texttt{/dev/console} to the active serial console
+specified by the kernel command line. This allows the same initramfs and
+userspace to work across architectures without modification.
 
 \newpage
 
@@ -66,6 +192,8 @@ into a kernel without using firmware or a disk image.
   \item \texttt{-machine virt} selects a generic virtual ARM machine model.
   \item \texttt{-cpu cortex-a72} selects a CPU model supported by the kernel.
   \item \texttt{-net nic -net user} enables basic user-mode networking.
+  \item \texttt{-append "console=ttyAMA0"} directs kernel output to the serial
+        console used by \texttt{-nographic}
 \end{itemize}
 
 \paragraph{x86\_64-Specific Options}
@@ -73,8 +201,7 @@ into a kernel without using firmware or a disk image.
 \begin{itemize}
   \item \texttt{-machine q35} selects a modern PCIe-based x86 machine model.
   \item \texttt{-append "console=ttyS0"} directs kernel output to the serial
-        console used by \texttt{-nographic} (it's sent to the kernel as a
-        command line parameter).
+        console used by \texttt{-nographic}
   \item \texttt{-netdev user,id=net0} and \texttt{-device virtio-net-pci}
         configure a virtual network interface.
 \end{itemize}
