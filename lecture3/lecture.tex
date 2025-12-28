@@ -67,8 +67,6 @@
       (eudev)
     \item Modules are typically placed under \texttt{/lib/modules}.
     \item We will ignore these and only use the core kernel binary.
-    \item Challenge: figure out how to have all modules put into the main kernel
-      image
   \end{itemize}
 \end{frame}
 
@@ -165,19 +163,6 @@
   \end{block}
 \end{frame}
 
-\begin{frame}[fragile]{Extra: Serial Devices in \texttt{/sys}}
-  \begin{itemize}
-    \item Serial devices appear under
-      \texttt{/sys/class/tty/}
-    \item Each entry links back to its driver and hardware
-      \begin{verbatim}
-/sys/class/tty/ttyS0/device
-/sys/class/tty/ttyAMA0/device
-      \end{verbatim}
-    \item Which driver created a particular tty?
-  \end{itemize}
-\end{frame}
-
 \begin{frame}{What is an initramfs?}
   \begin{itemize}
     \item An archive that the kernel unpacks when first booting (usually in the
@@ -200,9 +185,27 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}[fragile]{\texttt{switch\_root} to actual init}
+  \begin{itemize}
+    \item We run a \texttt{/init} script inside the initramfs and can get a
+      shell.
+    \item But nothing is persistent, there is no real disk here.
+    \item \texttt{switch\_root} helps us switch to an actual filesystem.
+    \item It only works when you are PID 1!
+    \item Different from chroot in that it changes the global filesystem
+      namespace
+  \end{itemize}
+\begin{lstlisting}[language=bash]
+# /dev/vda2 is the device representing our root filesystem.
+/bin/mount /dev/vda2 /mnt
+# /mnt/sbin/init is a proper PID 1.
+exec switch_root /mnt /sbin/init
+\end{lstlisting}
+\end{frame}
+
 \begin{frame}{Next Lecture}
   \begin{itemize}
-    \item What does init do?
+    \item What does real init do?
     \item What are some essential services busybox must help set up?
     \item How do bootable images get read? How do partitions work?
   \end{itemize}
