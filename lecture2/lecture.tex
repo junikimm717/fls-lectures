@@ -21,7 +21,7 @@
     \item The Invoker's working Directory
     \item External environment variables (unless explicitly specified as a
       parameter)
-    \item Filesystem state and contents
+    \item Filesystem state across multiple runs
   \end{itemize}
   You want to avoid as many required conditions for running the program as
   possible (your ``users'' don't want to suffer in setup hell)
@@ -57,7 +57,7 @@ It's probably good to go over this so you can pattern match paths described late
 \begin{itemize}
   \item Many build systems assume a conventional filesystem layout.
   \item We will be crafting a directory that contains a filesystem in this
-    format (serve as the template for our disk image and initramfs)
+    format (serves as the template for our disk image and initramfs)
   \item The most important directories for this course are:
     \begin{itemize}
       \item \texttt{/usr/include} — headers for userspace programs
@@ -145,19 +145,13 @@ You should also consult the handout about make to understand syntax specifics.
 \end{frame}
 
 \begin{frame}[fragile]{A Sample Pipeline}
-\begin{lstlisting}[language=bash]
-# environment variables affect configure and make
-# we configure in $SCRATCHDIR, not the source tree
-set -euo pipefail
-cd $SCRATCHDIR
-export CC="my-gcc-binary"
-export CFLAGS="-I/my/rootfs/usr/include -nostdinc -static"
-export LDFLAGS="-L/my/rootfs/usr/lib -static"
-$SRCDIR/configure --prefix=/usr
-# your working directory now has a Makefile and a bunch of other required artifacts
-make -j$(nproc)
-make -j$(nproc) install DESTDIR=/my/rootfs/
-\end{lstlisting}
+\lstinputlisting[language=bash]{./samplepipeline.sh}
+\begin{itemize}
+  \item Out of tree builds: build artifacts are kept separate from
+    the source tree.
+  \item Separation of concerns + certain programs (like gcc) only support out of
+    tree builds.
+\end{itemize}
 \end{frame}
 
 \begin{frame}{Libc}
@@ -183,6 +177,14 @@ make -j$(nproc) install DESTDIR=/my/rootfs/
   \item To build your libc, you will need to install these headers into your
     rootfs first (see handout for more info).
 \end{itemize}
+\end{frame}
+
+\begin{frame}{Attack Plan for Bootstrapping Userspace}
+  \begin{enumerate}
+    \item Kernel Headers
+    \item Libc (we use musl)
+    \item Compile everything else
+  \end{enumerate}
 \end{frame}
 
 \section{Up Next}

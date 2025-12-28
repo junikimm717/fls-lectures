@@ -7,7 +7,7 @@
 % -------------------------------------------------
 \DeclareOption*{\PassOptionsToClass{\CurrentOption}{beamer}}
 \ProcessOptions\relax
-\LoadClass{beamer}
+\LoadClass[t]{beamer}
 
 % -------------------------------------------------
 % Engine check (Alegreya via fontspec)

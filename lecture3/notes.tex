@@ -1,0 +1,114 @@
+\documentclass{../juni}
+
+\author{Juni Kim}
+\title{Lecture 3 Handout}
+\date{January 23, 2026}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\newpage
+
+\section{Kernel Configuration}
+
+To begin configuration, you should create a scratch directory (we highly
+recommend this is a subdirectory of \texttt{\$DIST} since that is also mounted
+in the external filesystem)
+
+\begin{lstlisting}[language=bash]
+cd /scratch/directory
+make -C "/path/to/kernel/src" menuconfig O="/scratch/directory"
+\end{lstlisting}
+
+\newpage
+
+\section{Exiting out of QEMU}
+
+Press ctrl-a, followed by x while inside the qemu window. This will
+automatically quit qemu. Once you have a real filesystem you should probably use
+\texttt{/bin/poweroff} instead.
+
+\section{QEMU Invocation and Architecture Differences}
+
+QEMU emulates hardware, not an operating system. As a result, different CPU
+architectures require different machine models, firmware, and device options.
+The commands below reflect the minimal sets of options required to boot systems
+in this course.
+
+If you are on x86, you should use \texttt{qemu-system-x86\_64}, and if you are
+on arm you should use \texttt{qemu-system-aarch64}.
+
+\subsection{Booting Directly with the Kernel}
+
+In early stages of development, it is often convenient to boot QEMU directly
+into a kernel without using firmware or a disk image.
+
+\paragraph{Common Options}
+
+\begin{itemize}
+  \item \texttt{-m 1024} sets the amount of guest memory (in MB).
+  \item \texttt{-kernel <path>} specifies the kernel binary to boot directly.
+  \item \texttt{-nographic} disables graphical output and routes the console to
+        the terminal.
+  \item \texttt{-no-reboot} causes QEMU to exit instead of restarting on failure.
+\end{itemize}
+
+\paragraph{aarch64-Specific Options}
+
+\begin{itemize}
+  \item \texttt{-machine virt} selects a generic virtual ARM machine model.
+  \item \texttt{-cpu cortex-a72} selects a CPU model supported by the kernel.
+  \item \texttt{-net nic -net user} enables basic user-mode networking.
+\end{itemize}
+
+\paragraph{x86\_64-Specific Options}
+
+\begin{itemize}
+  \item \texttt{-machine q35} selects a modern PCIe-based x86 machine model.
+  \item \texttt{-append "console=ttyS0"} directs kernel output to the serial
+        console used by \texttt{-nographic} (it's sent to the kernel as a
+        command line parameter).
+  \item \texttt{-netdev user,id=net0} and \texttt{-device virtio-net-pci}
+        configure a virtual network interface.
+\end{itemize}
+
+When booting directly with \texttt{-kernel}, the kernel is responsible for
+initializing the system without firmware involvement.
+
+\subsection{Booting from Disk Using Firmware}
+
+Once a full disk image has been constructed, QEMU should be run using firmware
+to more closely resemble a real system boot.
+
+\paragraph{Firmware Options}
+
+\begin{itemize}
+  \item \texttt{-drive if=pflash,readonly=on,file=...CODE...} provides the
+        read-only firmware image.
+  \item \texttt{-drive if=pflash,file=...VARS...} provides writable firmware
+        state (EFI variables).
+\end{itemize}
+
+The firmware binaries differ by architecture:
+\begin{itemize}
+  \item aarch64 uses \texttt{AAVMF\_CODE.fd} and \texttt{AAVMF\_VARS.fd}.
+  \item x86\_64 uses \texttt{OVMF\_CODE\_4M.fd} and \texttt{OVMF\_VARS\_4M.fd}.
+\end{itemize}
+
+\paragraph{Disk and Console Options}
+
+\begin{itemize}
+  \item \texttt{-drive if=virtio,format=raw,file=<image>} attaches the bootable
+        disk image.
+  \item \texttt{-serial mon:stdio} multiplexes the serial console and QEMU
+        monitor onto standard I/O.
+  \item \texttt{-nographic} disables graphical output.
+\end{itemize}
+
+When booting via firmware, the kernel is loaded from disk by the firmware rather
+than passed directly by QEMU.
+
+\end{document}

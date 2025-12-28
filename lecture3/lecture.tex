@@ -7,7 +7,19 @@
 
 \maketitle
 
-\section{Virtual Hardware and Booting}
+\begin{frame}[t]
+  \frametitle{Recap}
+  \begin{itemize}
+    \item Build scripts that are defensive to undeclared external state (working
+      directory, environment vars, filesystem)
+    \item source-artifact distinction
+    \item host-target distinction
+    \item Careful manipulation of env vars and options to force the compiler to
+    produce target-correct binaries.
+  \end{itemize}
+\end{frame}
+
+\section{Virtual Hardware}
 
 \begin{frame}{What is QEMU?}
   \begin{itemize}
@@ -16,16 +28,131 @@
     \item We can test run kernels, firmware, etc.
     \item Drivers for virtual hardware are readily available and much simpler
       than real hardware.
+    \item The kernel \textit{thinks} it's booting on real hardware.
   \end{itemize}
+  You should also check out the lecture 3 handout for more information on how to
+  actually use qemu.
+\end{frame}
+
+\section{Kernel related things}
+
+\begin{frame}{What is an OS kernel really?}
+  \begin{itemize}
+    \item Entire courses dedicated to answering this question!
+    \item The kernel is the first program that runs after firmware and never exits.
+    \item Privileged code with complete access to all hardware
+    \item Userspace code is at the mercy of the kernel. Gets information through
+      syscalls, talks with other processes via IPC orchestrated by the kernel,
+      \dots
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Compiling the Linux Kernel}
+  \begin{itemize}
+    \item Configure the kernel via menuconfig
+  \end{itemize}
+  TODO
+\end{frame}
+
+\begin{frame}[t]{Kernel Module System}
+  \begin{itemize}
+    \item The kernel can build features either built-in or as loadable modules.
+    \item Kernel modules must be loaded dynamically via userspace programs
+      (eudev)
+    \item Modules are typically placed under \texttt{/lib/modules}.
+    \item We will ignore these and only use the core kernel binary.
+    \item Challenge: figure out how to have all modules put into the main kernel
+      image
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{The Kernel as an EFI Stub}
+  \begin{itemize}
+    \item Getting ahead, but important to prevent you from recompiling kernel
+      later on.
+    \item We will be bypassing bootloaders like GRUB.
+    \item We will place the kernel binary in a special place on the
+      bootable disk where it can get detected by firmware
+    \item And that firmware will launch the kernel, so we need the kernel to be
+      able to jump start itself.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{The Kernel Command Line}
+  \begin{itemize}
+    \item The kernel has no configuration files like \texttt{/etc}.
+    \item All runtime configuration is passed as a single string at boot.
+    \item This string is known as the \textbf{kernel command line}.
+    \item Provided by firmware, bootloader, or the default that you compiled
+      into the kernel.
+  \end{itemize}
+
+  \begin{block}{Key Properties}
+    \begin{itemize}
+      \item Parsed very early during kernel initialization.
+      \item Exposed to userspace at \texttt{/proc/cmdline}.
+      \item Typos usually fail silently.
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\section{Preparing the Initramfs}
+
+\begin{frame}{FHS throwback}
+  \begin{itemize}
+    \item You are constructing a filesystem tree that will mirror the filesystem
+      tree on your initramfs.
+    \item You need to create the directory where your mountpoints will exist.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Filesystem Tree and Mount Points}
+  \begin{itemize}
+  \item Before userspace runs, the kernel provides no filesystems by default.
+  \item Your init script must mount essential filesystems manually.
+  \item Mount points must exist before mounting.
+  \item You can see mount points by \texttt{lsblk} or \texttt{df -Th}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Pseudo Filesystems}
+  \begin{itemize}
+    \item Exposed by the kernel to interact with userspace
+    \item Main ones are \texttt{/proc}, \texttt{/sys}, \texttt{/dev}, and
+      \texttt{/tmp}.
+    \item Tip: you should download useless files to \texttt{/tmp} instead
+      of Downloads folder, that way they get erased on reboot!
+  \end{itemize}
+  \begin{block}{Useful device files}
+    \begin{itemize}
+      \item \texttt{/dev/random} - constant stream of random bits
+      \item \texttt{/dev/zero} - stream of zero bits
+      \item \texttt{/dev/null} - black hole (used in scripts to throw away
+        output)
+      \item \texttt{/dev/vda, /dev/vda1, \dots} - what your drive will appears
+        as
+    \end{itemize}
+  \end{block}
 \end{frame}
 
 \begin{frame}{What is an initramfs?}
   \begin{itemize}
     \item An archive that the kernel unpacks when first booting (usually in the
       form of a cpio file).
-    \item MUST contain an executable script at \texttt{/init}
+    \item MUST contain an executable script at \texttt{/init} (you cannot
+      configure this path)
+    \item The kernel executes \texttt{/init} as PID 1.
     \item This gives you the opportunity to mount filesystems and switch root to
       a filesystem on your disk (later lecture!).
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Embedding an initramfs}
+  \begin{itemize}
+    \item There are cases where the kernel has to start by itself
+    \item E.g. when used as an EFI stub
+    \item Can't rely on an external initramfs archive, must have all contents in
+      the kernel binary.
   \end{itemize}
 \end{frame}
 
