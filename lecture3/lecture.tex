@@ -64,10 +64,12 @@
   \begin{itemize}
     \item Configure the kernel via menuconfig (See handout 2 for information on
       kernel options)
-    \item See the menu for the menuconfig on top, ? lets you see what option
+    \item See the menu for the menuconfig on top, pressing \texttt{?} lets you see what option
       things correspond to
+    \item There is no \texttt{make install}; you just extract out the kernel
+      image from the build tree.
+    \item Live Demo!
   \end{itemize}
-  TODO
 \end{frame}
 
 \begin{frame}[t]{Kernel Module System}
@@ -160,7 +162,7 @@
   \end{block}
 \end{frame}
 
-\begin{frame}{Serial Devices in \texttt{/sys}}
+\begin{frame}{Extra: Serial Devices in \texttt{/sys}}
   \begin{itemize}
     \item Serial devices appear under:
       \begin{verbatim}
