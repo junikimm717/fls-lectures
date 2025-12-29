@@ -27,11 +27,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
+            make \
             pandoc \
             texlive-latex-extra \
             texlive-fonts-recommended \
             texlive-fonts-extra \
-            texlive-luatex
+            texlive-luatex \
+            latexmk
 
       - name: Make build script executable
         run: chmod +x ./build.sh
