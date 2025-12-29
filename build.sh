@@ -10,6 +10,8 @@ mkdir -p "$DIR/dist"
 
 cp "$DIR/index.html" "$DIR/dist/"
 
+pandoc -o "$DIR/dist/syllabus.pdf" "$DIR/syllabus.md"
+
 for i in $(seq 1 5); do (
   echo "============================"
   echo "compiling lecture $i..."
