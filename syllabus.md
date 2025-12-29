@@ -41,7 +41,8 @@ Lectures and lab hours will take place at **34-301**. We will try our best to
 record lectures and allow for remote participation.
 
 The course will move quite fast, so lecture and lab hour participation is
-strongly recommended.
+strongly recommended. Lectures 1-4 come with an associated handout that students
+are expected to read to complete the assignment.
 
 # Assignment
 
@@ -76,25 +77,19 @@ All lectures and lab hours are expected to take place at **34-301**.
 
 ## Lecture 1 - Tuesday 1/20 1-3PM
 
-- Course structure
-- A review over shell scripting fundamentals including environment variables,
-  program invocation, and path resolution.
-- Principles behind build scripts: Filesystem hygiene, working directory invariance,
-  idempotency, environment variable manipulation.
-- How does one use docker? Why is it so important?
+- Course structure, expectations, and assignment overview
+- Writing correct shell scripts in hostile environments
+- Working directory, filesystem state, and environment variables
+- Host vs target systems
+- Docker as host-system standardization
 
 ## Lecture 2 - Wednesday 1/21 1-3PM
 
-- Understanding the build process
-  (`./configure`, `make -jn`, `make install DESTDIR=...`)
-  and all the tools that make that possible.
-- The source vs artifact distinction
-- What are the different compile flags? Why does the libc matter so much?
-- How does one use QEMU (the virtualization software used in the course) and
-  what are the most important options?
-- (related to above) why do you need the kernel and initramfs archive?
-
-**live demo**: show a booting kernel alongside an initramfs.
+- Build pipelines and required invariants
+- Source vs artifact distinction
+- C build systems: configure, make, install
+- Compiler and linker flags, libc concerns
+- Using QEMU and why kernels need an initramfs
 
 ## Lab 1 - Wednesday 1/21 End of Lecture-5PM
 
@@ -103,13 +98,11 @@ with questions about lab setup and the `busybox` section.
 
 ## Lecture 3 - Friday 1/23 1-3PM
 
-- Continuing Lecture 2: Reminder on script correctness
-- Manual kernel configuration (modules, drivers, ...), show how `make menuconfig` works
-- What is the kernel command line? Why is it so important?
-- Real and Pseudo filesystems
-  - Demo of why we need /proc, /dev, /sys, /tmp ...
-- The role of `switch_root`
-- What does init actually do? Why did systemd become a thing?
+- Kernel role during boot and early system bring-up
+- Manual kernel configuration with `make menuconfig`
+- Kernel command line and serial console configuration
+- Initramfs construction and pseudo-filesystems (/proc, /dev, /sys, ...)
+- `switch_root` and transition to real userspace
 
 ## Lab 2 - Friday 1/23 End of Lecture-5PM
 
@@ -121,14 +114,12 @@ ability to boot up a kernel into an initramfs.
 
 ## Lecture 4 - Monday 1/26 1-3PM
 
-- Mounting userland filesystems, determining user permissions
-- How init schemes work (demonstration with busybox's init)
-- Students should know how a bootable image file works, including how partition
-  tables, filesystems, and firmware interact.
-  - What are all the filesystem tools that get used
-  - How does the hardware know what to boot (special case of EFI firmware), and
-    why can we just let the kernel take care of it?
-- Important daemons (getty, eudev, chrony, dhcpcd) and why you need them
+- Persistent userspace and filesystem hierarchy
+- Init systems and BusyBox init configuration
+- Users, groups, and permission-critical files
+- Essential system daemons (getty, eudev, dhcpcd, chrony)
+- Disk images, filesystems, and EFI boot flow
+  - GUID Partition Table
 
 ## Lab 3 - Tuesday 1/26 1-5PM
 
@@ -136,15 +127,29 @@ Help will focus on the `image` and `user` sections of the lab.
 
 ## Lecture 5 - Thursday 1/29 1-3PM
 
-- SUID binaries (doas)
-- Configuring users and groups
-- Some other advanced topics
-  - Certificate authorities for https requests (openssl)
-  - Timezone data
-- Course Wrapup
+- Review of core system-building concepts
+- Additional topics:
+  - SUID binaries and controlled privilege escalation
+  - User and group configuration
+  - Time, certificates, and other system-level configuration
 
 ## Lab 4 - Thursday 1/29 End of Lecture-5PM
 
 Help will focus on the `image` and `user` sections of the lab.
 
 ## Assignment DUE - Friday 1/30 11:59PM ET
+
+# Policies around AI
+
+Use of AI tools is permitted. We encourage using AI in a similar way to a search
+engine, reference manual, or debugging assistant (e.g. clarifying error
+messages, understanding documentation, or recalling command syntax).
+
+However, use of agentic IDEs or tools that substantially offload reasoning,
+design decisions, or understanding is strongly discouraged. Submitting work you
+do not understand defeats the purpose of the course.
+
+A central goal of this course is learning to reason about Linux systems rather
+than cargo culting commands or configuration (i.e. copying commands or options
+without understanding why they are needed). You are expected to be able to
+explain and justify the commands and design choices used in your submission.

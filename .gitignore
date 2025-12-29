@@ -328,3 +328,4 @@ TSWLatexianTemp*
 *.fdb_latexmk
 brainstorm/
 dist/
+.DS_Store
