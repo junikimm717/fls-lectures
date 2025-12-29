@@ -37,6 +37,7 @@ jobs:
             texlive-fonts-extra \
             texlive-science \
             texlive-pictures \
+            fonts-jetbrains-mono \
             texlive-luatex
 
       - name: Make build script executable
