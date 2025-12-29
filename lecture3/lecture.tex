@@ -132,7 +132,7 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Filesystem Tree and Mount Points}
+\begin{frame}[fragile]{Filesystem Tree and Mount Points}
   \begin{itemize}
     \item Before userspace runs, the kernel provides no filesystems other than
       the initramfs by default.
@@ -141,6 +141,15 @@
     \item You can inspect mount points by \texttt{lsblk} (only block devices) or
       \texttt{df -Th} (see all filesystems)
   \end{itemize}
+\begin{lstlisting}[language=bash]
+
+mount -t devtmpfs devtmpfs /dev
+mount -t sysfs sys /sys
+mount -t tmpfs run /run
+mount -t proc proc /proc
+# mounting a disk partition is comparatively more straightforward.
+mount /dev/vda2 /mnt
+\end{lstlisting}
 \end{frame}
 
 \begin{frame}{Pseudo Filesystems}

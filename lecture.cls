@@ -102,6 +102,16 @@
 % -------------------------------------------------
 \author{Juni Kim \\ 6.S913}
 
+\AtBeginSection[]{
+  \begin{frame}
+    \centering
+    \vfill
+    {\usebeamerfont{section title}\usebeamercolor[fg]{section title}\insertsection}
+    \vfill
+  \end{frame}
+}
+
+
 % -------------------------------------------------
 % End of class
 % -------------------------------------------------
