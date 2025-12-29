@@ -12,8 +12,261 @@
 
 \newpage
 
-\section{Userspace Configuration Files}
+\section{Userspace Configuration}
 
-\subsection{Busybox init}
+At this point in the course, the kernel is capable of booting and executing an
+\texttt{initramfs}. This handout focuses on configuring the \emph{persistent}
+userspace environment that lives on disk and takes over after
+\texttt{switch\_root}.
+
+Everything in this section assumes that:
+\begin{itemize}
+  \item the kernel has successfully booted
+  \item \texttt{/sbin/init} is executed as PID 1
+  \item BusyBox is providing the init implementation
+\end{itemize}
+
+\subsection{(Important) Information Regarding Dhcpcd}
+
+\texttt{dhcpcd} is a DHCP client responsible for acquiring an IP address on
+modern networks. The kernel does \emph{not} configure networking automatically;
+without a userspace DHCP client, your system will have no internet access.
+
+Unlike many simple utilities, \texttt{dhcpcd} assumes the existence of:
+\begin{itemize}
+  \item a dedicated \texttt{dhcpcd} user
+  \item a dedicated \texttt{dhcpcd} group
+  \item a writable runtime directory under \texttt{/var/run}
+\end{itemize}
+
+In particular, the directory:
+
+\begin{verbatim}
+/var/run/dhcpcd
+\end{verbatim}
+
+\noindent must:
+\begin{itemize}
+  \item exist in the root filesystem image
+  \item be owned by \texttt{dhcpcd:dhcpcd}
+  \item be writable by that user
+\end{itemize}
+
+Because your root filesystem image is constructed offline, these ownership and
+permission adjustments must be made using filesystem debugging tools rather
+than normal runtime commands. Refer to the \textbf{Disk Tools} section below for
+details on how to use \texttt{debugfs} to accomplish this.
+
+If these permissions are incorrect, \texttt{dhcpcd} will fail silently or exit
+early during boot.
+
+\subsection{Configuring user and group files}
+
+Linux systems describe users and groups using plain text configuration files
+under \texttt{/etc}. These files are read by libc and userspace programs; the
+kernel itself does not interpret them.
+
+You must configure the following files:
+
+\begin{itemize}
+  \item \texttt{/etc/passwd}
+  \item \texttt{/etc/shadow}
+  \item \texttt{/etc/group}
+\end{itemize}
+
+\texttt{/etc/passwd} contains basic user metadata:
+\begin{verbatim}
+username:x:uid:gid:comment:home:shell
+\end{verbatim}
+
+\texttt{/etc/group} contains group metadata:
+\begin{verbatim}
+groupname:x:gid:user1,user2
+\end{verbatim}
+
+\texttt{/etc/shadow} stores password hashes and must be readable only by root:
+\begin{verbatim}
+username:hashed-password:...
+\end{verbatim}
+
+For this course, you minimally need:
+\begin{itemize}
+  \item a \texttt{root} user (UID 0)
+  \item a \texttt{dhcpcd} user and group
+\end{itemize}
+
+The permissions on \texttt{/etc/shadow} are \emph{security critical}. If this file
+is world-readable, your system is misconfigured. Because these files live inside
+an ext4 image, permissions must be verified and corrected using \texttt{debugfs}
+after filesystem creation.
+
+\subsection{Busybox inittab}
+
+BusyBox \texttt{init} determines system behavior by reading
+\texttt{/etc/inittab}. This file describes \emph{what} programs should be run
+and \emph{under what conditions}.
+
+An \texttt{inittab} entry conceptually consists of:
+\begin{verbatim}
+<id>:<runlevels>:<action>:<command>
+\end{verbatim}
+
+You will encounter entries equivalent in structure to the following:
+
+\begin{verbatim}
+::sysinit:<startup-script>
+console::respawn:<login-program>
+::ctrlaltdel:<reboot-command>
+::shutdown:<cleanup-command>
+\end{verbatim}
+
+Important ideas:
+\begin{itemize}
+  \item \texttt{sysinit} entries run very early, once
+  \item \texttt{respawn} entries are restarted if they exit
+  \item \texttt{init} is responsible for keeping essential services alive
+\end{itemize}
+
+Paths and arguments in \texttt{inittab} are \emph{policy}. If you copy them
+without understanding:
+\begin{itemize}
+  \item what program is being executed
+  \item why it needs to persist
+  \item what happens if it exits
+\end{itemize}
+then you will have a system that is difficult to debug.
+
+\subsection{Startup script}
+
+Rather than placing all logic directly into \texttt{inittab}, it is customary to
+delegate early boot tasks to a startup script.
+
+This script is invoked by \texttt{init} during the \texttt{sysinit} stage and is
+responsible for:
+\begin{itemize}
+  \item mounting kernel-provided filesystems
+  \item preparing runtime directories
+  \item launching essential daemons
+\end{itemize}
+
+A conceptual outline of such a script might look like:
+
+\begin{lstlisting}[language=bash]
+#!/bin/sh
+
+# mount kernel interfaces
+mount kernel-exposed-filesystem A
+mount kernel-exposed-filesystem B
+
+# prepare runtime state
+create volatile directories
+
+# start long-running services
+start service X
+start service Y
+\end{lstlisting}
+
+The exact programs and mount options matter less than understanding that:
+\begin{itemize}
+  \item this script runs as PID 1 initially
+  \item failure here usually prevents login entirely
+  \item ordering is significant
+\end{itemize}
+
+\subsection{Nameserver Configuration (Optional)}
+
+Name resolution is configured via \texttt{/etc/resolv.conf}. This file tells
+userspace programs where to send DNS queries.
+
+A minimal example might specify one or more nameservers:
+\begin{verbatim}
+nameserver 1.1.1.1
+nameserver 8.8.8.8
+\end{verbatim}
+
+With a valid \texttt{resolv.conf}, programs that rely on DNS (such as
+\texttt{wget}) can resolve hostnames.
+
+Note that this is \emph{not sufficient} for HTTPS. TLS requires:
+\begin{itemize}
+  \item cryptographic libraries
+  \item a trusted certificate store
+\end{itemize}
+
+Those topics are intentionally deferred to later lectures.
+
+\newpage
+
+\section{Disk Tools}
+
+This section describes the tools used to construct and inspect disk images.
+These tools operate on \emph{files}, not block devices, due to container
+constraints.
+
+\subsection{Generic}
+
+\texttt{dd} is a low-level byte copying tool. In this course, it is primarily
+used to create zero-initialized disk images.
+
+Conceptually:
+\begin{itemize}
+  \item the output file represents a disk
+  \item the size determines the disk capacity
+\end{itemize}
+
+\texttt{sgdisk} is used to create and modify GPT partition tables. It operates
+directly on disk images and allows you to:
+\begin{itemize}
+  \item define partition boundaries
+  \item assign partition types
+  \item label partitions
+\end{itemize}
+
+Because Docker does not permit loopback devices, partitions must be stitched
+together manually by copying filesystem images into specific offsets of a larger
+disk image. Understanding sector size and offsets is essential; blindly copying
+commands without reasoning about these values will lead to corrupted images.
+
+\subsection{Ext4}
+
+\texttt{ext4} is the primary Linux filesystem used for the root filesystem.
+
+Relevant tools include:
+\begin{itemize}
+  \item \texttt{mkfs.ext4} / \texttt{mke2fs}: create ext4 filesystems
+  \item \texttt{debugfs}: inspect and modify ext4 images offline
+\end{itemize}
+
+\texttt{debugfs} is particularly important in this course. It allows you to:
+\begin{itemize}
+  \item adjust file permissions
+  \item change ownership
+  \item fix mistakes without rebuilding everything
+\end{itemize}
+
+Its interface is interactive and non-obvious. Typical usage involves opening an
+image, issuing commands, and explicitly exiting. This tool is required to:
+\begin{itemize}
+  \item restrict access to \texttt{/etc/shadow}
+  \item configure ownership for \texttt{dhcpcd} runtime directories
+\end{itemize}
+
+\subsection{VFat}
+
+The EFI System Partition must use a FAT-based filesystem, typically FAT32.
+
+Tools from \texttt{dosfstools} are used:
+\begin{itemize}
+  \item \texttt{mkfs.vfat}: create the filesystem
+  \item \texttt{mmd}: create directories inside the image
+  \item \texttt{mcopy}: copy files into the image
+\end{itemize}
+
+EFI firmware does not search arbitrarily. The kernel must reside at a
+well-defined path within the ESP, and the exact filename depends on the target
+architecture.
+
+This filesystem does not support permissions, symlinks, or Unix ownership.
+It exists solely as a firmware-readable transport mechanism.
 
 \end{document}

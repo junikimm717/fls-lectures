@@ -9,13 +9,217 @@
 
 % make sure you cover boot levels, especially in init.
 
-\begin{frame}[fragile]{Hello!}
-\begin{lstlisting}[language=bash]
-# hello
-for i in $(seq 1 3); do
-  echo $i
-done
-\end{lstlisting}
+\begin{frame}{From Previous Lectures}
+  \begin{itemize}
+    \item Build shell scripts with predictable behavior in spite of:
+      \begin{itemize}
+        \item Working Directory
+        \item Undeclared environment variables
+        \item State of the filesystem
+      \end{itemize}
+    \item The kernel unpacks an initramfs, which is purely in memory. We mount
+      our disk, then \texttt{switch\_root}.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{This Lecture}
+  \begin{itemize}
+    \item We close the story on userspace and filesystems.
+    \item Part 1: User programs, root filesystem, and configuration
+    \item Part 2: Partitions and Filesystems
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{The FHS (Again)}
+  The root filesystem needs to follow the filesystem hierarchy standard even
+  more strictly than the rootfs.
+  \begin{block}{You need these:}
+    \begin{itemize}
+      \item \texttt{/usr/bin}, \texttt{/usr/share}, \texttt{/usr/include}
+      \item \texttt{/lib}, \texttt{/bin}
+      \item \texttt{/etc}
+      \item \texttt{/run}, \texttt{/proc}, \texttt{/sys}, \texttt{/dev}
+    \end{itemize}
+  \end{block}
+  In effect, a near-superset of your initramfs tree.
+\end{frame}
+
+\begin{frame}{PID 1}
+  Usually, PID 1 will:
+  \begin{itemize}
+    \item Reap orphaned zombies (essential!)
+    \item Mounts filesystems
+    \item Spin up daemons
+    \item Maybe other functionality too
+  \end{itemize}
+  \begin{exampleblock}{Examples of Init}
+    \begin{itemize}
+      \item Busybox init (we will use this for simplicity)
+      \item Systemd (popular but controversial!)
+      \item OpenRC, runit
+    \end{itemize}
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Configuring PID 1}
+  \begin{itemize}
+    \item \texttt{/etc/inittab} describes \emph{what} should run and \emph{when}
+    \item Entries can be one-shot, respawned, or tied to boot stages (startup,
+      shutdown, \dots)
+    \item Long-running services must be restarted if they die
+  \end{itemize}
+  \begin{exampleblock}{Startup scripts}
+    \begin{itemize}
+      \item Typically a script like \texttt{/etc/init.d/rcS}
+      \item Responsible for mounting filesystems and starting daemons
+      \item Invoked automatically by \texttt{init}
+    \end{itemize}
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Configuring Users and Groups}
+  \begin{itemize}
+    \item The most basic way in which the operating system regulates access to
+      privileged resources.
+    \item You only need to have \texttt{root} and \texttt{dhcpcd} (see handout
+      for more info on dhcpcd)
+    \item Root is all-powerful, generally avoid being root because you can break
+      a lot of things!
+  \end{itemize}
+  \begin{block}{Configuration files}
+    \begin{itemize}
+      \item \texttt{/etc/passwd}: Contains metadata about users
+      \item \texttt{/etc/shadow}: Contains hashed passwords (needs restrictive permissions)
+      \item \texttt{/etc/group}: Contains metadata about groups
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\section{Important userspace daemons}
+
+\begin{frame}{Dhcpcd}
+  \begin{itemize}
+    \item You basically need DHCP on modern networks for any kind of internet
+      access
+    \item The kernel will not do IP address configuration for you
+    \item You can test working by \texttt{ping 1.1.1.1} (or some other raw ip
+      address; DNS will be covered later)
+    \item Dhcpcd requires its own user and group, along with a writable
+      directory of its own! (See handout)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Other Essential Daemons (You must start them!)}
+  \begin{block}{getty}
+    \begin{itemize}
+      \item Spawns login prompts on \texttt{/dev/tty*}
+      \item One instance per terminal
+    \end{itemize}
+  \end{block}
+  \begin{block}{eudev}
+    \begin{itemize}
+      \item Userspace device manager
+      \item Creates device nodes under \texttt{/dev}
+      \item Triggers driver loading and hotplug events
+    \end{itemize}
+  \end{block}
+  \begin{block}{chrony}
+    \begin{itemize}
+      \item NTP client for wall-clock time
+      \item Corrects clock drift after boot
+      \item Required for TLS, sane logs, reproducible builds (assumes monotonic
+        time)
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\section{Filesystems}
+
+\begin{frame}{What is a Filesystem?}
+  \begin{itemize}
+    \item A filesystem defines how bytes on disk are interpreted
+    \item The filesystem interface is in the kernel (Linux is monolithic!)
+    \item It maps names to data and metadata
+    \item It defines persistence across reboots
+  \end{itemize}
+  \begin{block}{Responsibilities}
+    \begin{itemize}
+      \item File and directory naming
+      \item Permissions and ownership
+      \item Metadata (timestamps, size, links)
+      \item Crash recovery and consistency guarantees
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Filesystems we use}
+  \begin{block}{Ext4}
+    \begin{itemize}
+      \item Standard Linux filesystem
+      \item Journaling (crash recovery)
+      \item Allows for permissions
+    \end{itemize}
+  \end{block}
+  \begin{block}{VFat}
+    \begin{itemize}
+      \item Readable by EFI Firmware
+      \item Much simpler, no permissions or even symlinks!
+      \item We will put just the kernel in a special path.
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}{GPT}
+  \begin{itemize}
+    \item GUID Partition Table (replaces MBR)
+    \item A standardized partition table format
+    \item Unique identifiers for each partition
+    \item Well-defined partition types (not just numbers)
+  \end{itemize}
+  \begin{block}{Regarding Firmware}
+    \begin{itemize}
+      \item Firmware reads metadata at the front of the disk
+      \item Special partition types signal boot-related data
+      \item The EFI System Partition (ESP) is identified this way
+    \end{itemize}
+  \end{block}
+  You should consult the handout for further info!
+\end{frame}
+
+\begin{frame}{Before we keep moving}
+  There are some toolchain constraints in the assignment!
+  \begin{itemize}
+    \item We will use filesystem debug tools and \texttt{sgdisk}
+    \item LFS manuals will often get you to create a loopback device, which is
+      impossible inside a docker container.
+    \item If you attempt to copy files into filesystems via loopback devices,
+      your build pipeline will fail.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Boot Path Summarized}
+  (Cue blackboard)
+  \begin{enumerate}
+    \item Firmware starts
+    \item Firmware figures out where ESP is from GPT metadata
+    \item Launch bootloader (aka kernel) inside ESP (fixed path)
+    \item Kernel unpacks initramfs
+    \item initramfs \texttt{/init} mounts the real filesystem, then
+      runs \texttt{switch\_root}
+    \item \texttt{/sbin/init} in the disk takes over and launches programs.
+    \item login screen (hopefully)
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Up Next}
+  \begin{itemize}
+    \item Lab hours on Tuesday 1-5PM!
+    \item Thursday's lecture will not feature topics critical to the completion
+      of your assignment!
+    \item Some straggling topics: DNS
+    \item Topics beyond the lab: Graphical Environments, Dbus, Certificates, \dots
+    \item Course Wrap-up, final lab hours
+  \end{itemize}
 \end{frame}
 
 \end{document}
