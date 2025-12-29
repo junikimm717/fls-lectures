@@ -93,6 +93,18 @@ cat /proc/cmdline
 This assumes you have the \texttt{/proc} pseudofilesystem mounted on your
 system.
 
+\paragraph{Default Host Name}
+
+We prefer you configure the default hostname of your system to some name that
+clearly displays your kerb.
+
+\begin{verbatim}
+CONFIG_DEFAULT_HOSTNAME="6s913-system"
+\end{verbatim}
+
+Generally, you would configure hostnames via \texttt{/etc/hostname}, but this is
+one way you can personalize your kernel.
+
 \paragraph{EFI Support}
 
 To support booting via UEFI firmware, the kernel must include the EFI stub and

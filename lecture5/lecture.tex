@@ -7,13 +7,177 @@
 
 \maketitle
 
-\begin{frame}[fragile]{Hello!}
-\begin{lstlisting}[language=bash]
-# hello
-for i in $(seq 1 3); do
-  echo $i
-done
-\end{lstlisting}
+\begin{frame}{Today's Lecture}
+  \begin{itemize}
+    \item No essential new material, bit more relaxed pace for questions and lab
+      hours
+    \item Will be reviewing concepts from the last lectures
+    \item Some other parts of a Linux System that you might use
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Writing Good Shell Programs}
+  \begin{itemize}
+    \item We want to write programs that behave predictably and are defensive to
+      \begin{itemize}
+        \item Working directory
+        \item Environment variables
+        \item Filesystem contents
+      \end{itemize}
+    \item Your program must behave predictably in hostile filesystem
+      environments or error cleanly.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Critical Distinctions}
+  \begin{itemize}
+    \item Host vs Target: We are building up a bootable image for a target
+      system on a host machine. (Different characteristics)
+    \item Source vs Artifact: Developers give us source code, the compiler emits
+      artifacts. Out-of-tree builds separate these.
+    \item Initramfs vs Root filesystem: Initramfs is temporary, it boots the
+      root filesystem and runs \texttt{switch\_root}.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{The C Compiler and Friends}
+  \begin{itemize}
+    \item Preprocessor, Compiler, Linker stages
+    \item Corresponding flags are \texttt{CPPFLAGS}, \texttt{CFLAGS}, \texttt{LDFLAGS}
+    \item You need to ensure the host libc does not contaminate your build.
+    \item \texttt{./configure} $\rightarrow$ \texttt{make} $\rightarrow$
+      \texttt{make install} (Roughly, differs for different source)
+    \item Please parallelize make with the \texttt{-j} option!
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Building the Kernel}
+  \begin{itemize}
+    \item You can configure the kernel with \texttt{make menuconfig}
+    \item See handout for drivers you should not disable (you might not have a
+      console or networking without these)
+    \item Booting as an EFI Stub
+    \item Configure default command line (Firmware won't give you anything)
+    \item Embed initramfs into the kernel (you don't have a filesystem when
+      booting as an EFI stub)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{User Daemons and System Configuration}
+  \begin{itemize}
+    \item Most configuration files will go in \texttt{/etc}, including declaring
+      users.
+    \item Busybox init reads \texttt{/etc/inittab} to see what it should start
+      when.
+  \end{itemize}
+  \begin{block}{Important Daemons init launches}
+    \begin{itemize}
+      \item Getty - login screen
+      \item Dhcpcd - IP address configuration + internet
+      \item Chrony - Time
+      \item Eudev - device discovery
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Disk Partitions and Filesystems}
+  \begin{itemize}
+    \item \texttt{mkfs} initializes filesystems
+    \item \texttt{sgdisk} helps you assemble disk partitions together.
+    \item We have two partitions:
+      \begin{enumerate}
+        \item ESP - readable by firmware (\texttt{/dev/vda1})
+        \item Ext4 - actually useful as a root filesystem (\texttt{/dev/vda2})
+      \end{enumerate}
+    \item GPT header and metadata tells firmware where the ESP is, the firmware
+      will locate the kernel inside the ESP.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Some Debugging Pointers}
+  \begin{itemize}
+    \item No output: serial console or kernel cmdline issue.
+    \item Panic early: initramfs issue or missing /init.
+    \item Boots but no login: getty, /etc/inittab, or permissions.
+    \item Networking dead: dhcpcd user, device nodes, or kernel config.
+  \end{itemize}
+\end{frame}
+
+\section{Other things you might want to think about}
+
+\begin{frame}{OpenSSL}
+  \begin{itemize}
+    \item Major library not covered in this assignment.
+    \item Implements cryptographic protocols.
+    \item Used for SSH, HTTPS, \dots
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{SSH}
+  \begin{itemize}
+    \item Protocol used for securely accessing servers
+    \item You probably accessed most linux servers via ssh
+    \item sshd is responsible for this
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{SUID Binaries}
+  \begin{itemize}
+    \item Normally, programs run with the UID/GID of the invoking user.
+    \item Some binaries are marked \textbf{SUID} (set-user-ID).
+    \item When executed, they run with the \emph{file owner's} UID instead.
+    \item Common use: controlled privilege escalation (e.g. \texttt{sudo},
+      \texttt{doas}, \texttt{passwd}).
+    \item Optional: try configuring doas on your operating system!
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Timezones}
+  \begin{itemize}
+    \item Linux systems use unix millis (time since Jan 1, 1970).
+    \item Timezones are the responsibility of userspace
+    \item Timezone info lives under \texttt{/usr/share/zoneinfo}.
+    \item You generally symlink one of the zoneinfo files to \texttt{/etc/localtime}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Filesystem Mounts and \texttt{/etc/fstab}}
+  \begin{itemize}
+    \item \texttt{/etc/fstab} declares what should be mounted and where (instead
+      of editing init which can be catastrophic).
+    \item Entries describe:
+      \begin{itemize}
+        \item device or filesystem
+        \item mount point
+        \item filesystem type
+      \end{itemize}
+    \item \texttt{mount -a} will consult fstab.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{System Hostname}
+  \begin{itemize}
+    \item The kernel maintains a system-wide hostname (default set in kernel config).
+    \item Exposed via \texttt{/proc/sys/kernel/hostname}.
+    \item You can write to this file to change the hostname on statup.
+    \item Used by shells, networking tools, and system services.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{GUI on Linux}
+  \begin{itemize}
+    \item X11 display protocol (+ x.org server)
+    \item Window managers on top of the x.org server
+    \item Wayland (replacing xorg on desktop)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Up Next}
+  \begin{itemize}
+    \item Final Lab Hours
+    \item Submit the lab by Friday 11:59PM
+    \item Thank you for participating!
+  \end{itemize}
 \end{frame}
 
 \end{document}

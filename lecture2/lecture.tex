@@ -72,9 +72,18 @@ It's probably good to go over this so you can pattern match paths described late
 
 \section{C Dependency Management}
 
+\begin{frame}{GCC Parts}
+  Crudely,
+  \begin{enumerate}
+    \item C Preprocessor (Source code to Source Code)
+    \item C Compiler (Source code to binary object code w/ symbols)
+    \item C Linker (Combines objects together)
+  \end{enumerate}
+\end{frame}
+
 \begin{frame}[fragile]{C basics}
   \begin{itemize}
-    \item Headers (Preprocessor takes them in)
+    \item Headers (Preprocessor copies them to source files)
     \item Objects and Libraries (Linker responsibilities)
   \end{itemize}
 \lstinputlisting[language=c]{./depdemo/main.c}
@@ -92,7 +101,7 @@ headers and implementations when compiling main
   Flags are passed to either make or configure as options or environment
   variables. They will be passed to \texttt{gcc} or \texttt{ld} as command-line
   arguments.
-  
+
   See the lecture 2 handout for more information on how make works.
   \begin{block}{Compiler flags (CFLAGS and CPPFLAGS)}
     \begin{itemize}
