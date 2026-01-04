@@ -1,4 +1,5 @@
 ---
+documentclass: scrartcl
 title: 6.S913 Fundamentals of Linux Systems
 author:
 - Juni Kim (junickim)
@@ -46,100 +47,34 @@ are expected to read to complete the assignment.
 
 # Assignment
 
+The assignment starter source code is available at
+[https://github.com/junikimm717/fls-assignment-public](https://github.com/junikimm717/fls-assignment-public).
+
+Students will be responsible for reading the setup instructions in the README.
+To receive credit, students must submit a tarball with their project to the
+portal at [https://6s913.mit.junic.kim/](https://6s913.mit.junic.kim/).
+
 The assignment for this course has four main parts, named `busybox`, `kernel`,
 `user`, `image`, which represent different stages of an OS bootstrapping build
 system. All parts must be completed and integrated together to receive credit
 for the course. The parts all rely on one another. The assignment must be
 submitted by **Friday, January 30, 2026 11:59PM GMT-5**.
 
-Students will be given a somewhat minimal scaffold for their projects and will
-be responsible for submitting a tarball for their project. More instructions are
-in the assignment repository README.
-
 A significant part of this course is learning to maintain clean, reproducible
-filesystem state. Projects will be evaluated on a fresh system, and any reliance
-on undeclared or residual state (e.g. working directory, undeclared environment
-variables, artifacts that weren't cleaned up) will be treated as a correctness
-issue.
+filesystem state. Projects will be evaluated on a fresh system with no network
+connection, and any reliance on undeclared or residual state (e.g. working
+directory, undeclared environment variables, artifacts that weren't cleaned up)
+will be treated as a correctness issue.
 
-The assignment should be done on sufficiently modern hardware (for reference, you should
-expect to compile the linux kernel). Docker is required on all systems, and
-Windows users are strongly advised to use wsl.
+The assignment should be done on sufficiently modern hardware (for reference,
+you should expect to compile the linux kernel). Docker is required on all
+systems, and Windows users are strongly advised to use wsl.
 
 There will be multiple lab hours designed to help students with the checkpoints.
 
-We will only grade the final submissions of those who have registered for
-credit. Submission logistics will be announced later.
+# Policies
 
-# Schedule
-
-All lectures and lab hours are expected to take place at **34-301**.
-
-## Lecture 1 - Tuesday 1/20 1-3PM
-
-- Course structure, expectations, and assignment overview
-- Writing correct shell scripts in hostile environments
-- Working directory, filesystem state, and environment variables
-- Host vs target systems
-- Docker as host-system standardization
-
-## Lecture 2 - Wednesday 1/21 1-3PM
-
-- Build pipelines and required invariants
-- Source vs artifact distinction
-- C build systems: configure, make, install
-- Compiler and linker flags, libc concerns
-- Using QEMU and why kernels need an initramfs
-
-## Lab 1 - Wednesday 1/21 End of Lecture-5PM
-
-Help will be available for all parts of the lab, but we will prioritize those
-with questions about lab setup and the `busybox` section.
-
-## Lecture 3 - Friday 1/23 1-3PM
-
-- Kernel role during boot and early system bring-up
-- Manual kernel configuration with `make menuconfig`
-- Kernel command line and serial console configuration
-- Initramfs construction and pseudo-filesystems (/proc, /dev, /sys, ...)
-- `switch_root` and transition to real userspace
-
-## Lab 2 - Friday 1/23 End of Lecture-5PM
-
-Help will be available for all parts of the lab, but we will prioritize those
-with questions regarding the `kernel` and `image` section.
-
-By this point, students should have a compiled and working kernel binary and the
-ability to boot up a kernel into an initramfs.
-
-## Lecture 4 - Monday 1/26 1-3PM
-
-- Persistent userspace and filesystem hierarchy
-- Init systems and BusyBox init configuration
-- Users, groups, and permission-critical files
-- Essential system daemons (getty, eudev, dhcpcd, chrony)
-- Disk images, filesystems, and EFI boot flow
-  - GUID Partition Table
-
-## Lab 3 - Tuesday 1/26 1-5PM
-
-Help will focus on the `image` and `user` sections of the lab.
-
-## Lecture 5 - Thursday 1/29 1-3PM
-
-- Review of core system-building concepts
-- Additional topics:
-  - SUID binaries and controlled privilege escalation
-  - User and group configuration
-  - Time, certificates, and other system-level configuration
-
-## Lab 4 - Thursday 1/29 End of Lecture-5PM
-
-Help will focus on the `image` and `user` sections of the lab.
-
-## Assignment DUE - Friday 1/30 11:59PM ET
-
-# Policies around AI
+## AI Use
 
 Use of AI tools is permitted. We encourage using AI in a similar way to a search
 engine, reference manual, or debugging assistant (e.g. clarifying error
@@ -153,3 +88,97 @@ A central goal of this course is learning to reason about Linux systems rather
 than cargo culting commands or configuration (i.e. copying commands or options
 without understanding why they are needed). You are expected to be able to
 explain and justify the commands and design choices used in your submission.
+
+## Integrity
+
+Students are expected to submit work that they have honestly authored and
+understand.
+
+Course staff reserve the right to investigate and adjust grades for submissions
+that attempt to subvert the assignment, grading process, or course
+infrastructure. This includes, but is not limited to:
+
+- Injecting malicious or intentionally disruptive code into build scripts or
+  artifacts
+- Attempting to interfere with the grading environment or its execution
+- Hardcoding outputs or behaviors specifically to pass the grader without
+  correctly implementing the required system
+- Submitting build pipelines that do not genuinely construct a working system,
+  even if they appear to pass automated checks
+
+While the grading infrastructure includes safeguards against many such
+behaviors, these safeguards are not exhaustive. Submissions are expected to
+reflect a genuine, correct build process rather than exploit assumptions or
+weaknesses in the grader.
+
+If a submission is found to violate the spirit or intent of the assignment,
+course staff may adjust grades accordingly.
+
+\newpage
+# Schedule
+
+All lectures and lab hours are expected to take place at **34-301**.
+
+### Lecture 1 - Tuesday 1/20 1-3PM
+
+- Course structure, expectations, and assignment overview
+- Writing correct shell scripts in hostile environments
+- Working directory, filesystem state, and environment variables
+- Host vs target systems
+- Docker as host-system standardization
+
+### Lecture 2 - Wednesday 1/21 1-3PM
+
+- Build pipelines and required invariants
+- Source vs artifact distinction
+- C build systems: configure, make, install
+- Compiler and linker flags, libc concerns
+- Using QEMU and why kernels need an initramfs
+
+### Lab 1 - Wednesday 1/21 End of Lecture-5PM
+
+Help will be available for all parts of the lab, but we will prioritize those
+with questions about lab setup and the `busybox` section.
+
+### Lecture 3 - Friday 1/23 1-3PM
+
+- Kernel role during boot and early system bring-up
+- Manual kernel configuration with `make menuconfig`
+- Kernel command line and serial console configuration
+- Initramfs construction and pseudo-filesystems (/proc, /dev, /sys, ...)
+- `switch_root` and transition to real userspace
+
+### Lab 2 - Friday 1/23 End of Lecture-5PM
+
+Help will be available for all parts of the lab, but we will prioritize those
+with questions regarding the `kernel` and `image` section.
+
+By this point, students should have a compiled and working kernel binary and the
+ability to boot up a kernel into an initramfs.
+
+### Lecture 4 - Monday 1/26 1-3PM
+
+- Persistent userspace and filesystem hierarchy
+- Init systems and BusyBox init configuration
+- Users, groups, and permission-critical files
+- Essential system daemons (getty, eudev, dhcpcd, chrony)
+- Disk images, filesystems, and EFI boot flow
+  - GUID Partition Table
+
+### Lab 3 - Tuesday 1/26 1-5PM
+
+Help will focus on the `image` and `user` sections of the lab.
+
+### Lecture 5 - Thursday 1/29 1-3PM
+
+- Review of core system-building concepts
+- Additional topics:
+  - SUID binaries and controlled privilege escalation
+  - User and group configuration
+  - Time, certificates, and other system-level configuration
+
+## Lab 4 - Thursday 1/29 End of Lecture-5PM
+
+Help will focus on the `image` and `user` sections of the lab.
+
+## Assignment DUE - Friday 1/30 11:59PM ET
