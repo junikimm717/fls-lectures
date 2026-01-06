@@ -79,6 +79,16 @@ It's probably good to go over this so you can pattern match paths described late
     \item C Compiler (Source code to binary object code w/ symbols)
     \item C Linker (Combines objects together)
   \end{enumerate}
+  Source Code:
+  \begin{itemize}
+    \item Is human readable C or Assembly (among other languages)
+    \item Not readable by machines
+  \end{itemize}
+  Object Code contains:
+  \begin{itemize}
+    \item Symbols corresponding to functions for the linker to do relocation.
+    \item Computer-readable binary instructions
+  \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]{C basics}
