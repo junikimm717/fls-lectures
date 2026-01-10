@@ -15,21 +15,31 @@
     \item Check the portal at \url{https://6s913.mit.junic.kim} for submission.
     \item Communication over Piazza \url{https://piazza.com/mit/spring2026/6s913}
     \item Lectures on Tuesday, Wednesday, Friday, Monday, Thursday
+    \item First four lectures come with an associated handout. You are expected
+      to read through this handout as needed.
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Course Goals}
   \begin{itemize}
-    \item More than a Linux usage course, but not an OS course (comparatively
-      little kernel material)
-    \item Assignment: compose a build system for a Linux-based OS
+    \item Assignment: compose a build system for a Linux-based OS (a lot of
+      other courses will abstract this away)
     \item Reasoning out bugs and writing deterministic programs in a stateful
       environment (hostile to deterministic behavior)
     \item Along the way, understand the most basic components of a modern
       operating system
   \end{itemize}
-  This course will move fast! We recommend getting started on the assignment
-  ASAP and getting help quickly.
+  This course will move fast! Get started and ask for help ASAP.
+\end{frame}
+
+\begin{frame}{What this Course is Not}
+  \begin{itemize}
+    \item A ``How to use the command line'' tutorial - many other courses for
+      this.
+    \item ``How to use Git'' - You will be responsible for cloning, committing,
+      and recovering from mistakes
+    \item Operating systems kernels class (Go check out 6.1810!)
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Special Note on Cargo Culting}
@@ -60,7 +70,8 @@
 
 \begin{frame}{State}
   \begin{itemize}
-    \item The shell is your main interface with the operating system.
+    \item The shell is your main interface with the operating system. You can
+      run other programs, manage the filesystem, etc.
     \item Usually you interface via the CLI, but you can automate this with
       scripts.
     \item Side effects are the \textbf{entire point} of shell scripts.
@@ -93,13 +104,15 @@ print(sumn(int(input("number: "))))
 
 \begin{frame}[fragile]{Commands as Programs}
 \begin{itemize}
-  \item Most commands are \textbf{Programs on your system}
+  \item Most commands are \textbf{Names for executables on your system}
   \item They are just shortened for convenience (we'll get to this)
 \begin{lstlisting}[language=bash]
 # same as /bin/mkdir myfolder
 mkdir myfolder
 # same as /usr/bin/gcc (on most linux systems)
 gcc file.c -o file
+# figure out whether the last command exited successfully.
+echo "$?"
 \end{lstlisting}
   \item Successful programs exit with an exit code of 0, non-zero means some
     error.
@@ -109,8 +122,10 @@ gcc file.c -o file
 
 \begin{frame}[fragile]{Working Directory}
   \begin{itemize}
+    \item \texttt{pwd} gets the current working dir, \texttt{cd} changes the
+      working directory.
     \item Most of the programs and arguments you invoke will be
-      working-directory dependent.
+      working-directory dependent. (relative paths)
     \item If you have a  script that is attached to a certain repository,
       you need to work to prevent this.
   \end{itemize}
@@ -178,11 +193,6 @@ gcc hello.c -o hello
 
 \begin{frame}[fragile]{Environment Variable Demo}
 \begin{lstlisting}[language=bash]
-# reader.sh
-echo "MYENV=$MYENV"
-echo "MYENV2=$MYENV2"
-\end{lstlisting}
-\begin{lstlisting}[language=bash]
 # tester.sh
 DIR="$(realpath "$(dirname "$0" )" )"
 
@@ -192,17 +202,24 @@ export MYENV2=hello2
 # you will get MYENV= (not passed) and MYENV2=hello2 (passed)
 "$DIR/reader.sh"
 \end{lstlisting}
+\begin{lstlisting}[language=bash]
+# reader.sh will inherit only env vars explicitly marked with export
+echo "MYENV=$MYENV"
+echo "MYENV2=$MYENV2"
+\end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]{So what is PATH?}
   \begin{itemize}
     \item The bane of intro CS students trying to set up their environments
-    \item Basically tells you which executables you can shorthand.
+    \item Basically tells you which executables you can shorthand (instead of
+      writing out a full path).
     \item Use \texttt{command -v} to figure out which executable is being
       called.
     \item A colon-separated series of paths which the shell will lookup.
-  \item Homebrew, Virtual Envs, Conda, \dots do their thing by messing with this
-    variable!
+    \item Homebrew, Virtual Envs, Conda, \dots do their thing by messing with this
+      variable!
+    \item Live Demo!
   \end{itemize}
 \begin{lstlisting}[language=bash]
 export PATH="/usr/bin:/bin"

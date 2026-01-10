@@ -45,6 +45,8 @@
     \item Userspace code is at the mercy of the kernel (plus or minus security
       bugs). Gets information through syscalls, talks with other processes via
       IPC orchestrated by the kernel, \dots
+    \item There are (non-commercial) operating systems that run everything in
+      kernel mode :)
   \end{itemize}
 \end{frame}
 
@@ -97,7 +99,8 @@
       device files corresponding to uart devices.
     \item The kernel does \emph{not} print anywhere unless a console is registered
     \item Consoles are selected by name via \texttt{console=<tty>} on the kernel command line
-    \item Passing a non-existent console (e.g. \texttt{ttyAMA0} on x86) results in silence
+    \item Passing a non-existent console (e.g. \texttt{ttyAMA0} on an x86 board)
+      results in silence 
     \item QEMU emulates serial hardware; the kernel must include the driver
     \item \texttt{/dev/console} points to whatever console the kernel chose
   \end{itemize}

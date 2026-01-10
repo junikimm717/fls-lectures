@@ -39,16 +39,20 @@ exists.
 
 \subsection{Executable Bit}
 
-A script must be marked executable to be run directly:
+A script file must be marked executable to be run directly:
 
 \begin{lstlisting}[language=bash]
+# assuming script.sh is in your working directory
 chmod +x script.sh
 ./script.sh
+# this will fail unless your working directory is in $PATH
+script.sh
 \end{lstlisting}
 
 Contrast with:
 
 \begin{lstlisting}[language=bash]
+# again assumes script.sh is in your directory.
 bash script.sh
 \end{lstlisting}
 
@@ -97,7 +101,7 @@ Use command substitution to capture stdout:
 
 \begin{lstlisting}[language=bash]
 FILES="$(ls)"
-COUNT="$(ls | wc -l)"
+FILECOUNT="$(ls | wc -l)"
 \end{lstlisting}
 
 Exit codes are \textbf{not} captured—only stdout.
@@ -192,13 +196,16 @@ Effects:
 Caveats:
 \begin{itemize}
   \item \texttt{-e} does not trigger inside all conditionals
+  \item \texttt{-o pipefail} is a bash-only feature (fails on busybox sh).
   \item control-flow semantics change subtly
   \item this is not a substitute for careful reasoning
 \end{itemize}
 
 \subsection{Idempotent Filesystem Operations}
 
-Filesystem state persists across runs. Scripts must tolerate re-execution.
+Filesystem state persists across runs. Scripts must tolerate re-execution. In
+particular, if you did not create it in the script, \textbf{do not assume it
+exists}.
 
 Prefer:
 
@@ -213,11 +220,6 @@ Be deliberate about:
   \item overwriting vs appending
   \item cleanup on failure
 \end{itemize}
-
-Rule:
-\begin{quote}
-If you did not create it in the script, do not assume it exists.
-\end{quote}
 
 \newpage
 \section{Docker}
@@ -338,10 +340,5 @@ This is often useful during development.
   \item Containers can accumulate if not explicitly removed.
   \item Volumes and bind mounts persist even after containers are deleted.
 \end{itemize}
-
-Rule of thumb:
-\begin{quote}
-If something strange is happening, run \texttt{docker ps -a} first.
-\end{quote}
 
 \end{document}
