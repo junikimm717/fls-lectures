@@ -163,6 +163,15 @@ You should also consult the handout about make to understand syntax specifics.
   \end{itemize}
 \end{frame}
 
+\begin{frame}{Files in a Standard C Project}
+  \begin{itemize}
+    \item \texttt{Makefile.in} (if automake managed) or \texttt{Makefile}
+    \item \texttt{configure} (autoconf)
+    \item \texttt{[files].c} and \texttt{[files].h}
+    \item \texttt{README} and \texttt{INSTALL} for any install documentation
+  \end{itemize}
+\end{frame}
+
 \begin{frame}[fragile]{A Sample Pipeline}
 \lstinputlisting[language=bash]{./samplepipeline.sh}
 \begin{itemize}

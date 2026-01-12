@@ -59,8 +59,8 @@
 
 \begin{frame}{Today's Lecture}
   \begin{itemize}
-    \item Writing ``correct'' shell scripts that are defensive to external
-      state.
+    \item Writing ``correct'' shell scripts that exhibit defined behavior in a
+      hostile environment (your users)
     \item Host vs Target distinction
     \item The role of Docker (host system standardization)
   \end{itemize}
@@ -74,16 +74,18 @@
       run other programs, manage the filesystem, etc.
     \item Usually you interface via the CLI, but you can automate this with
       scripts.
-    \item Side effects are the \textbf{entire point} of many shell scripts.
+    \item Side effects are the \textbf{entire point} of many shell scripts (e.g.
+      setup scripts).
       \begin{block}{External State}
         \begin{itemize}
-          \item Working Directory (!!!!)
+          \item Working Directory (!!!! if you use relative paths)
           \item Filesystem contents
           \item Environment variables passed by the system
         \end{itemize}
       \end{block}
     \item Do not assume shell scripts are like 6.101 assignments.
-    \item You are responsible for writing your own reset button.
+    \item You are responsible for writing your own reset button (reverting any
+      changes the shell script made if necessary).
   \end{itemize}
 \end{frame}
 
@@ -163,7 +165,7 @@ echo "$?"
 set -euo pipefail
 # what happens if your working directory is not the repository root?
 # You need to then explain to users.
-pip install -e ./requirements.txt
+pip install -r ./requirements.txt
 python3 ./devserver.py
 \end{lstlisting}
   Better script:
@@ -299,7 +301,7 @@ test -f myfile.txt || echo 'hello' > myfile.txt
 \section{Defensive Scripting}
 
 \begin{frame}{A Tale of Two Scripts: Part 2}
-So what's wrong with the below?
+So what's wrong with the below? What are the possible failure modes?
 \lstinputlisting[language=bash]{badscript.sh}
 
 \only<2->{
@@ -314,7 +316,17 @@ So what's wrong with the below?
 \end{frame}
 
 \begin{frame}[fragile]{A More Defensive Script}
-\lstinputlisting[language=bash]{goodscript.sh}
+\begin{lstlisting}[language=bash]
+#!/usr/bin/env bash
+# exit if any part encounters a bad exit code or undefined env var
+set -euo pipefail
+# parent directory of our script
+DIR="$(realpath "$(dirname "$0" )" )"
+# -p for idempotency, our working directory is now deterministic.
+mkdir -p "$DIR/out" && cd "$DIR/out"
+# test for existence first.
+test -r text.txt && grep foo text.txt > result
+\end{lstlisting}
 
 \begin{block}{Design Decisions}
 \begin{itemize}
