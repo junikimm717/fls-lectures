@@ -108,15 +108,14 @@ headers and implementations when compiling main
 \end{frame}
 
 \begin{frame}{GCC Flags}
-  Flags are passed to either make or configure as options or environment
-  variables. They will be passed to \texttt{gcc} or \texttt{ld} as command-line
-  arguments.
-
-  See the lecture 2 handout for more information on how make works.
+  Flags are passed to either make (See handout) or configure as options or
+  environment variables. They will be passed to \texttt{gcc} or \texttt{ld} as
+  command-line arguments.
   \begin{block}{Compiler flags (CFLAGS and CPPFLAGS)}
     \begin{itemize}
       \item \texttt{-I/path/to/headers}
       \item -nostdinc (nuke include defaults)
+      \item -Wno-error and other warning compiler flags (\textbf{Mitigates an entire class of silent failures})
     \end{itemize}
   \end{block}
   \begin{block}{Linker flags (LDFLAGS)}

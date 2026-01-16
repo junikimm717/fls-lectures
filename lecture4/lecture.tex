@@ -63,6 +63,7 @@
 
 \begin{frame}{Configuring PID 1}
   \begin{itemize}
+    \item This is \textit{one} of many ways init systems can be configured
     \item \texttt{/etc/inittab} describes \emph{what} should run and \emph{when}
     \item Entries can be one-shot, respawned, or tied to boot stages (startup,
       shutdown, \dots)
@@ -86,10 +87,11 @@
     \item Root is all-powerful, generally avoid being root because you can break
       a lot of things!
   \end{itemize}
-  \begin{block}{Configuration files}
+  \begin{block}{Configuration files (passwd and group read by musl)}
     \begin{itemize}
       \item \texttt{/etc/passwd}: Contains metadata about users
-      \item \texttt{/etc/shadow}: Contains hashed passwords (needs restrictive permissions)
+      \item \texttt{/etc/shadow}: Contains hashed passwords (needs very
+        restrictive permissions)
       \item \texttt{/etc/group}: Contains metadata about groups
     \end{itemize}
   \end{block}
@@ -114,6 +116,7 @@
     \begin{itemize}
       \item Spawns login prompts on \texttt{/dev/tty*}
       \item One instance per terminal
+      \item Reads \texttt{/etc/shadow} to allow access
     \end{itemize}
   \end{block}
   \begin{block}{eudev}
@@ -127,8 +130,7 @@
     \begin{itemize}
       \item NTP client for wall-clock time
       \item Corrects clock drift after boot
-      \item Required for TLS, sane logs, reproducible builds (assumes monotonic
-        time)
+      \item Required for TLS and sane logs
     \end{itemize}
   \end{block}
 \end{frame}
