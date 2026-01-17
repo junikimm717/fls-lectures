@@ -192,6 +192,20 @@ You should also consult the handout about make to understand syntax specifics.
   \end{itemize}
 \end{frame}
 
+\begin{frame}{``No such file or directory'' Trap}
+  If executing a binary yields this error, it's one of the following
+  \begin{enumerate}
+    \item The file literally doesn't exist
+    \item The executable is dynamically linked + the interpreter for the executable doesn't exist
+  \end{enumerate}
+  \begin{itemize}
+    \item You should always use \texttt{readelf -l} to inspect ELF headers and
+      check if an interpreter is requested.
+    \item You either want no INTERP header or \texttt{/lib/ld-musl-\$ARCH.so.1}
+    \item \texttt{/lib/ld-linux-\$ARCH.so.1} is bad (glibc)
+  \end{itemize}
+\end{frame}
+
 \begin{frame}{Kernel Userspace Headers}
 \begin{itemize}
   \item The Linux kernel provides a set of headers intended for \textbf{userspace}

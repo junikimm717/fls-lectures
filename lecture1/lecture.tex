@@ -52,6 +52,9 @@
       the program will assume.
     \item Your scripts will be built in hostile environments. ``It works on my
       machine'' is unacceptable.
+    \item Note: concretely understanding ``setup issues'' is the \textit{entire
+      point} of the class. It is expected that you give a faithful effort to
+      triage and resolve such issues.
     \item Note on AI: it's everywhere, aim to use it like a search
       engine or to assist in debugging work. Agentic IDE's are discouraged.
   \end{itemize}
@@ -212,7 +215,7 @@ int main() {
 }
 \end{lstlisting}
 \begin{lstlisting}[language=bash]
-gcc hello.c -o hello
+gcc hello.c -o /tmp/hello
 # this will output "hello" twice
 /tmp/hello
 # this will output one "hello" and one 1
@@ -245,13 +248,19 @@ MYENV=hello
 # an environment variable
 export MYENV2=hello2
 
-# you will get MYENV= (not passed) and MYENV2=hello2 (passed)
 "$DIR/reader.sh"
 \end{lstlisting}
 \begin{lstlisting}[language=bash]
-# reader.sh will inherit only env vars explicitly marked with export
+# reader.sh 
+# this program will inherit only env vars explicitly marked with export
 echo "MYENV=$MYENV"
 echo "MYENV2=$MYENV2"
+\end{lstlisting}
+When executed:
+\begin{lstlisting}
+$ ./tester.sh
+MYENV=
+MYENV2=hello2
 \end{lstlisting}
 \end{frame}
 
