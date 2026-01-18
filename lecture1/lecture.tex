@@ -67,6 +67,17 @@
     \item Host vs Target distinction
     \item The role of Docker (host system standardization)
   \end{itemize}
+  This is a lot of content! If you're stuck please ask questions.
+  \begin{block}{Mental Models you should remember}
+    \begin{itemize}
+      \item Shell scripts ingest and manipulate environment state.
+      \item Shell scripts accumulate effects that need explicit checking.
+      \item Locating yourself in the filesystem.
+      \item Shell control flow as exit-code driven
+      \item Host-Target distinction
+      \item (Additional) Image vs Containers in Docker
+    \end{itemize}
+  \end{block}
 \end{frame}
 
 \section{Shell Scripts and State}
@@ -110,7 +121,7 @@ print(sumn(int(input("number: "))))
 \begin{frame}[fragile]{Commands as Programs}
 \begin{itemize}
   \item Some set of shell built-ins
-  \item But most commands are \textbf{names for executables on your system}
+  \item But most commands are \textbf{names for executable files on your system}
   \item They are just shortened for convenience (we'll get to this)
 \begin{lstlisting}[language=bash]
 # same as /bin/mkdir myfolder
@@ -139,6 +150,30 @@ echo "$?"
 mkdir /tmp/hello
 echo "$?"
 \end{lstlisting}
+\end{frame}
+
+\begin{frame}{Locating Yourself in the Filesystem}
+  \begin{itemize}
+    \item Will be hugely emphasized in this class!
+    \item There are relative paths and absolute paths (know which one you use).
+    \item You must reason correctly about paths or else you will get \texttt{no
+      such file} errors everywhere.
+    \item ASK: where is the file I need, and where is it relative to where I am?
+  \end{itemize}
+  \begin{block}{Relative Path Examples}
+    \begin{itemize}
+      \item \texttt{../myfile.sh}
+      \item \texttt{./myfile.sh}
+      \item \texttt{myfile.sh}
+      \item \texttt{some/dir/../myfile.sh}
+    \end{itemize}
+  \end{block}
+  \begin{block}{Absolute Path Examples}
+    \begin{itemize}
+      \item \texttt{/workspace/myfile.sh}
+      \item \texttt{/home/myuser/myfile.sh}
+    \end{itemize}
+  \end{block}
 \end{frame}
 
 \begin{frame}[fragile]{Working Directory}
@@ -370,7 +405,7 @@ test -r text.txt && grep foo text.txt > result
     \item You need to carefully manipulate environment variables and options
       because cross-compiling is not assumed!
 \begin{lstlisting}[language=bash]
-# in some source directory
+# working dir is the root of some source tree
 export CC="/path/to/custom/cc"
 export CFLAGS="-nostdinc -I/custom/include/prefix -static"
 export LDFLAGS="-L/custom/lib/prefix -static"
@@ -386,17 +421,20 @@ make install DESTDIR="/path/to/your/rootfs"
     \item Containerization platform we will be using for the class.
     \item Everyone will be working on a standard Debian Linux environment.
     \item This standardizes the \textbf{host} compiling system.
-    \item Please consult the assignment README for further instructions on usage.
+    \item Assignment README also has further instructions on usage.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Core concepts Regarding Docker}
+  \begin{itemize}
+    \item A container is a process managed by docker with its own view of the
+      filesystem and network. (\texttt{docker run})
+    \item An image is the template for a container (debian)
+    \item You build images and then run containers based off that image.
+    \item You can also execute commands inside a running container like an
+      interactive shell (\texttt{docker exec})
     \item Live Demo! (Image pull, container start, monitoring, deletion)
   \end{itemize}
-  \begin{block}{Image vs Container}
-    \begin{itemize}
-      \item A container is a process managed by docker with its own view of the
-        filesystem, network, and so on.
-      \item An image is the template for a container.
-      \item You build images and then run containers based off that image.
-    \end{itemize}
-  \end{block}
 \end{frame}
 
 \begin{frame}{Next Lecture (Tomorrow same time)}
