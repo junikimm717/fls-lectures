@@ -74,6 +74,27 @@ There will be multiple lab hours designed to help students with the checkpoints.
 
 # Policies
 
+## Alternate Grading
+
+The primary and expected path to receiving credit for this course is to submit a
+project that passes the automated grading infrastructure. Students are strongly
+encouraged to aim to complete the full assignment and pass the autograder.
+
+For students who have attended the first four lectures and have made a serious,
+good-faith effort on the assignment, an alternative evaluation path may be
+available. In this case, students may request a meeting with course staff to
+demonstrate a working system and explain their design decisions, debugging
+process, and understanding of the material.
+
+Credit under this alternative path is granted at staff discretion and is
+intended for students who clearly understand the core concepts of the course
+but were unable to complete the full build pipeline. This option is not intended
+to replace the autograder and will not be offered to students who have not
+engaged with the course.
+
+Details about requesting such a meeting, including eligibility and expectations,
+will be announced later.
+
 ## AI Use
 
 Use of AI tools is permitted. We encourage using AI in a similar way to a search
