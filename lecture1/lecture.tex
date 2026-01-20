@@ -26,7 +26,7 @@
     \item A ``How to use the command line'' tutorial - many other courses for
       this.
     \item ``How to use Git'' - You will be responsible for cloning, committing,
-      and recovering from mistakes
+      and recovering from mistakes, although we may post resources later
     \item Operating systems kernels class (Go check out 6.1810!)
   \end{itemize}
 \end{frame}
@@ -81,9 +81,7 @@
   \end{block}
 \end{frame}
 
-\section{Shell Scripts and State}
-
-\begin{frame}{State}
+\begin{frame}{Shell Scripts and State}
   \begin{itemize}
     \item The shell is your main interface with the operating system. You can
       run other programs, manage the filesystem, etc.
@@ -162,16 +160,15 @@
 ├── devserver.py        <-- program entry point
 └── setup.sh            <-- script entry point (THIS FILE)
 \end{verbatim}
-\end{frame}
-
-\begin{frame}[fragile]{Working Directory Demo}
-  Bad \texttt{setup.sh} (explodes if you run it from \texttt{/}):
+  Bad \texttt{setup.sh} (Why is it bad?):
 \begin{lstlisting}[language=bash]
 #!/usr/bin/env bash
-# what is this relative to???
 pip install -r ./requirements.txt
 python3 ./devserver.py
 \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Working Directory Demo}
 Better \texttt{setup.sh}:
 \begin{lstlisting}[language=bash]
 #!/usr/bin/env bash
@@ -195,8 +192,6 @@ What is dirname and realpath (symlink resolution)?
   \texttt{chmod} modifies these permissions.
 \end{frame}
 
-\section{An Example}
-
 \begin{frame}[fragile]{A Tale of Two Scripts}
 \begin{lstlisting}[language=python]
 #!/usr/bin/env python3
@@ -210,18 +205,20 @@ print(sumn(int(input("number: "))))
 
 \section{Running Processes}
 
-\begin{frame}[fragile]{Commands as Programs}
+\begin{frame}[fragile]{``Commands'' as Programs}
 \begin{itemize}
   \item Some set of shell built-ins
   \item But most commands are \textbf{names for executable files on your system}
+  \item The filesystem has marked them with executable permissions
+    (\texttt{chmod +x})
   \item They are just shortened for convenience (we'll get to this)
 \begin{lstlisting}[language=bash]
 # this is a valid shell script (albeit very brittle).
 /bin/mkdir myfolder
 /usr/bin/gcc file.c -o file
 \end{lstlisting}
-  \item Successful programs exit with an exit code of 0, non-zero means some
-    error.
+  \item You can execute your own shell scripts from inside other shell scripts.
+  \item Programs take in options which they can then interpret internally.
 \end{itemize}
 \end{frame}
 
@@ -231,7 +228,7 @@ print(sumn(int(input("number: "))))
     \item Errors in UNIX-like operating systems are handled via exit codes.
     \item Successful programs exit with 0, non-zero means some error.
     \item Most shell interpreters will store the exit status of the last exit
-      code in \texttt{\$?}.
+      code in \texttt{\$?} (special bash variable).
   \end{itemize}
 \begin{lstlisting}[language=bash]
 mkdir -p /tmp/hello
@@ -240,6 +237,29 @@ echo "$?"
 # prints 1 (because it already exists)
 mkdir /tmp/hello
 echo "$?"
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Exit Codes and Propagation}
+  \begin{itemize}
+    \item Programs tend to depend on effects from the last program
+    \item Bash will not exist just because the last program exited
+      unsuccessfully (consider implications on the cli)
+    \item We use \texttt{set -euo pipefail} to ensure we fail rather than go
+      into UB.
+  \end{itemize}
+\begin{verbatim}
+/project/root
+├── myfile.txt
+└── src
+    └── helloify.sh
+\end{verbatim}
+Now consider src/helloify.sh:
+\begin{lstlisting}[language=bash]
+# what happens if cd succeeds, and what happens if cd fails?
+# reason out working directory
+cd src/
+echo "hello world!" > ../myfile.txt
 \end{lstlisting}
 \end{frame}
 
@@ -261,7 +281,7 @@ ls | wc -l >> count.txt
 # this will show two lines.
 cat count.txt
 \end{lstlisting}
-How might we use truncate vs append behavior when constructing a log?
+Q: How might we use truncate vs append behavior when constructing a log?
   \end{itemize}
 \end{frame}
 
@@ -367,7 +387,7 @@ command -v myprogram
     \item conditionals are determined by exit code (0 is true, non zero is false!)
     \item You probably want to use \texttt{\&\&} and \texttt{||} more
     \item Functions have no scope! They just help section code
-    \item \texttt{test} can be used to check for file existence.
+    \item \texttt{test} can be used to check for file existence and other utilities.
   \end{itemize}
 \begin{lstlisting}[language=bash]
 if ! test -f myfile.txt; then
@@ -378,6 +398,8 @@ fi
 # so does below
 test -f myfile.txt || echo 'hello' > myfile.txt
 \end{lstlisting}
+
+Don't forget \texttt{set -euo pipefail} to prevent undefined effects!
 \end{frame}
 
 \section{Defensive Scripting}
@@ -388,7 +410,8 @@ So what's wrong with the below? What are the possible failure modes?
 
 \only<2->{
 \begin{itemize}
-  \item<2-> dependent on the script invoker's working directory!
+  \item<2-> dependent on the script invoker's working directory! (Behavior
+    outside of project root is undefined behavior)
   \item<3-> mkdir or grep not found (The user screwed up \texttt{\$PATH})
   \item<4->errors propagate (no ``exceptions'' unless forced)
   \item<4->Bonus: \texttt{/bin/bash} is not standard! Only \texttt{/bin/sh} is.
@@ -465,9 +488,9 @@ make install DESTDIR="/path/to/your/rootfs"
 
 \begin{frame}{Core concepts Regarding Docker}
   \begin{itemize}
-    \item A container is a process managed by docker with its own view of the
+    \item A \textit{container} is a process managed by docker with its own view of the
       filesystem and network. (\texttt{docker run})
-    \item An image is the template for a container (debian)
+    \item An \textit{image} is the template for a container (debian)
     \item You build images and then run containers based off that image.
     \item You can also execute commands inside a running container like an
       interactive shell (\texttt{docker exec})
@@ -480,6 +503,7 @@ make install DESTDIR="/path/to/your/rootfs"
     \item Build tools
     \item Understanding the gcc toolchain and general pipeline for building C
       programs
+    \item Tightly controlling inputs for cross compilation
   \end{itemize}
 \end{frame}
 
