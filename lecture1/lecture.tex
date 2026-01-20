@@ -17,6 +17,17 @@
     \item Lectures on Tuesday, Wednesday, Friday, Monday, Thursday
     \item First four lectures come with an associated handout. You are expected
       to read through this handout as needed.
+    \item Alternative grading available if you attend all 4 lectures.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{What this Course is Not}
+  \begin{itemize}
+    \item A ``How to use the command line'' tutorial - many other courses for
+      this.
+    \item ``How to use Git'' - You will be responsible for cloning, committing,
+      and recovering from mistakes
+    \item Operating systems kernels class (Go check out 6.1810!)
   \end{itemize}
 \end{frame}
 
@@ -30,16 +41,6 @@
       operating system
   \end{itemize}
   This course will move fast! Get started and ask for help ASAP.
-\end{frame}
-
-\begin{frame}{What this Course is Not}
-  \begin{itemize}
-    \item A ``How to use the command line'' tutorial - many other courses for
-      this.
-    \item ``How to use Git'' - You will be responsible for cloning, committing,
-      and recovering from mistakes
-    \item Operating systems kernels class (Go check out 6.1810!)
-  \end{itemize}
 \end{frame}
 
 \begin{frame}{Special Note on Cargo Culting}
@@ -103,58 +104,11 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{A Tale of Two Scripts}
-\begin{onlyenv}
-\begin{lstlisting}[language=python]
-#!/usr/bin/env python3
-def sumn(n):
-  return (n * (n+1))//2
-print(sumn(int(input("number: "))))
-\end{lstlisting}
-\end{onlyenv}
+\section{Understanding the File System}
 
-\lstinputlisting[language=bash]{badscript.sh}
-\end{frame}
-
-\section{Running Processes}
-
-\begin{frame}[fragile]{Commands as Programs}
-\begin{itemize}
-  \item Some set of shell built-ins
-  \item But most commands are \textbf{names for executable files on your system}
-  \item They are just shortened for convenience (we'll get to this)
-\begin{lstlisting}[language=bash]
-# same as /bin/mkdir myfolder
-mkdir myfolder
-# same as /usr/bin/gcc (on most linux systems)
-gcc file.c -o file
-\end{lstlisting}
-  \item Successful programs exit with an exit code of 0, non-zero means some
-    error.
-\end{itemize}
-\end{frame}
-
-\begin{frame}[fragile]{Exit Codes}
+\begin{frame}{Locating Yourself in the File System}
   \begin{itemize}
-    \item Other languages use sophisticated exceptions, Result types
-    \item Errors in UNIX-like operating systems are handled via exit codes.
-    \item Successful programs exit with 0, non-zero means some error.
-    \item Most shell interpreters will store the exit status of the last exit
-      code in \texttt{\$?}.
-  \end{itemize}
-\begin{lstlisting}[language=bash]
-mkdir -p /tmp/hello
-# prints 0
-echo "$?"
-# prints 1 (because it already exists)
-mkdir /tmp/hello
-echo "$?"
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}{Locating Yourself in the Filesystem}
-  \begin{itemize}
-    \item Will be hugely emphasized in this class!
+    \item You \textbf{must} internalize this for the class to make sense.
     \item There are relative paths and absolute paths (know which one you use).
     \item You must reason correctly about paths or else you will get \texttt{no
       such file} errors everywhere.
@@ -178,6 +132,7 @@ echo "$?"
 
 \begin{frame}[fragile]{Working Directory}
   \begin{itemize}
+    \item Relative paths are relative \textbf{to what}??
     \item \texttt{pwd} gets the current working dir, \texttt{cd} changes the
       working directory.
     \item Most of the programs and arguments you invoke will be working
@@ -194,36 +149,108 @@ echo "$?"
       the same repo).
     \item Naive \texttt{cp ./myconfig \$DIST/config} might not work
   \end{itemize}
+  Live Demo with paths!
 \end{frame}
 
 \begin{frame}[fragile]{Working Directory Demo}
-  Bad script:
+  Let's say you have the following project structure:
+\begin{verbatim}
+/home/junikim/projects/myproject/ <-- repository root
+├── .git
+├── .gitignore
+├── requirements.txt    <-- data file (referenced by scripts)
+├── devserver.py        <-- program entry point
+└── setup.sh            <-- script entry point (THIS FILE)
+\end{verbatim}
+\end{frame}
+
+\begin{frame}[fragile]{Working Directory Demo}
+  Bad \texttt{setup.sh} (explodes if you run it from \texttt{/}):
 \begin{lstlisting}[language=bash]
 #!/usr/bin/env bash
-set -euo pipefail
-# what happens if your working directory is not the repository root?
-# You need to then explain to users.
+# what is this relative to???
 pip install -r ./requirements.txt
 python3 ./devserver.py
 \end{lstlisting}
-  Better script:
+Better \texttt{setup.sh}:
 \begin{lstlisting}[language=bash]
 #!/usr/bin/env bash
-set -euo pipefail
 DIR="$(realpath "$(dirname "$0" )" )"
 cd "$DIR"
-# now we can run this knowing we are in the repository root.
+# now we can run this knowing all relative paths are relative to repository root.
 pip install -e ./requirements.txt
 python3 ./devserver.py
+\end{lstlisting}
+What is dirname and realpath (symlink resolution)?
+\end{frame}
+
+\begin{frame}{File System Permissions}
+  Regular Linux files have three main permissions attached to them:
+  \begin{enumerate}
+    \item Reading (\texttt{cat myfile} does this)
+    \item Writing (If you edit a file with a text editor)
+    \item Executing (When you run a script)
+  \end{enumerate}
+  The kernel can grant or deny any of these permissions to you.
+  \texttt{chmod} modifies these permissions.
+\end{frame}
+
+\section{An Example}
+
+\begin{frame}[fragile]{A Tale of Two Scripts}
+\begin{lstlisting}[language=python]
+#!/usr/bin/env python3
+def sumn(n):
+  return (n * (n+1))//2
+print(sumn(int(input("number: "))))
+\end{lstlisting}
+
+\lstinputlisting[language=bash]{badscript.sh}
+\end{frame}
+
+\section{Running Processes}
+
+\begin{frame}[fragile]{Commands as Programs}
+\begin{itemize}
+  \item Some set of shell built-ins
+  \item But most commands are \textbf{names for executable files on your system}
+  \item They are just shortened for convenience (we'll get to this)
+\begin{lstlisting}[language=bash]
+# this is a valid shell script (albeit very brittle).
+/bin/mkdir myfolder
+/usr/bin/gcc file.c -o file
+\end{lstlisting}
+  \item Successful programs exit with an exit code of 0, non-zero means some
+    error.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Exit Codes}
+  \begin{itemize}
+    \item Some runtimes use sophisticated exceptions, result types
+    \item Errors in UNIX-like operating systems are handled via exit codes.
+    \item Successful programs exit with 0, non-zero means some error.
+    \item Most shell interpreters will store the exit status of the last exit
+      code in \texttt{\$?}.
+  \end{itemize}
+\begin{lstlisting}[language=bash]
+mkdir -p /tmp/hello
+# prints 0
+echo "$?"
+# prints 1 (because it already exists)
+mkdir /tmp/hello
+echo "$?"
 \end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]{Pipes and Redirection}
   \begin{itemize}
     \item The I/O streams to know are stdin (0), stdout(1), stderr(2)
-    \item These are technically file descriptors.
-    \item You can redirect or pipe program output into the input of another
-      program.
+    \item They are actually called file descriptors (see 6.1810), but just think
+      of them as streams that can be redirected.
+    \item The redirection gets read left to right.
+    \item You can redirect or pipe program stdout into the stdin of another
+      program (pipes).
 \begin{lstlisting}[language=bash]
 # count the number of files and output that
 ls | wc -l
@@ -234,6 +261,7 @@ ls | wc -l >> count.txt
 # this will show two lines.
 cat count.txt
 \end{lstlisting}
+How might we use truncate vs append behavior when constructing a log?
   \end{itemize}
 \end{frame}
 
@@ -242,27 +270,36 @@ cat count.txt
 // hello.c
 #include <unistd.h>
 int main() {
-  char hello[] = "hello\n";
+  char out[] = "stdout\n";
+  char err[] = "stderr\n";
   // write to standard output
-  write(1, hello, sizeof(hello));
+  write(1, out, sizeof(out));
   // write to standard error
-  write(2, hello, sizeof(hello));
+  write(2, err, sizeof(err));
 }
 \end{lstlisting}
 \begin{lstlisting}[language=bash]
-gcc hello.c -o /tmp/hello
+gcc hello.c -o hello
 # this will output "hello" twice
-/tmp/hello
+./hello
 # this will output one "hello" and one 1
-/tmp/hello | wc -l
+./hello | wc -l
 # this will output 2 because we merge stderr into stdout
-/tmp/hello 2>&1 | wc -l
+./hello 2>&1 | wc -l
 \end{lstlisting}
+(Blackboard for how the streams get modified)
 \end{frame}
 
 \begin{frame}[fragile]{Environment Variables}
+Shell Variables are:
 \begin{itemize}
-  \item External variable that can influence processes
+  \item Confined to the process
+  \item Set by the syntax \texttt{VAR=value}
+  \item Referenced with dollar sign syntax \texttt{VAR="\$ANOTHERVAR"}
+\end{itemize}
+Environment Variables are:
+\begin{itemize}
+  \item External variables that can influence processes
   \item Passed from parent to child.
   \item You can access them as variables when writing shell scripts.
   \item Ordinary shell variables will not become environment variables unless
@@ -270,28 +307,29 @@ gcc hello.c -o /tmp/hello
   \item You will often manipulate \texttt{PATH}, \texttt{CC}, \texttt{LDFLAGS},
     and a bunch of other environment variables to get the build results you
     want.
+  \item In python, you extract process env vars via \texttt{os.environ}
 \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]{Environment Variable Demo}
+tester.sh
 \begin{lstlisting}[language=bash]
-# tester.sh
 DIR="$(realpath "$(dirname "$0" )" )"
 
-# regular variable (will not get exported)
+# regular bash variable (will not get exported)
 MYENV=hello
 # an environment variable
 export MYENV2=hello2
 
 "$DIR/reader.sh"
 \end{lstlisting}
+reader.sh
 \begin{lstlisting}[language=bash]
-# reader.sh 
 # this program will inherit only env vars explicitly marked with export
 echo "MYENV=$MYENV"
 echo "MYENV2=$MYENV2"
 \end{lstlisting}
-When executed:
+When tester.sh is executed:
 \begin{lstlisting}
 $ ./tester.sh
 MYENV=
@@ -307,10 +345,10 @@ MYENV2=hello2
     \item Use \texttt{command -v} to figure out which executable is being
       called.
     \item A colon-separated series of paths which the shell will lookup.
-    \item Homebrew, Virtual Envs, Conda, \dots do their thing by messing with this
-      variable!
-    \item Live Demo!
+    \item Homebrew, Virtual Envs, Conda, \dots change the world by messing with
+      this variable (\texttt{python3} points to a different interpreter)!
   \end{itemize}
+Live Demo!
 \begin{lstlisting}[language=bash]
 export PATH="/usr/bin:/bin"
 # bash will search /usr/bin/myprogram, followed by /bin/myprogram.
@@ -325,7 +363,7 @@ command -v myprogram
 
 \begin{frame}[fragile]{Control Flow}
   \begin{itemize}
-    \item if, for, and while all exist
+    \item if, for, and while all exist, and are driven by exit codes
     \item conditionals are determined by exit code (0 is true, non zero is false!)
     \item You probably want to use \texttt{\&\&} and \texttt{||} more
     \item Functions have no scope! They just help section code
