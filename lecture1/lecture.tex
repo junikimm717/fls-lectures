@@ -345,12 +345,13 @@ export MYENV2=hello2
 \end{lstlisting}
 reader.sh
 \begin{lstlisting}[language=bash]
-# this program will inherit only env vars explicitly marked with export
+# this program will only get env vars marked with "export"
 echo "MYENV=$MYENV"
 echo "MYENV2=$MYENV2"
 \end{lstlisting}
 When tester.sh is executed:
 \begin{lstlisting}
+$ chmod +x reader.sh tester.sh
 $ ./tester.sh
 MYENV=
 MYENV2=hello2
@@ -410,11 +411,11 @@ So what's wrong with the below? What are the possible failure modes?
 
 \only<2->{
 \begin{itemize}
-  \item<2-> dependent on the script invoker's working directory! (Behavior
+  \item dependent on the script invoker's working directory! (Behavior
     outside of project root is undefined behavior)
-  \item<3-> mkdir or grep not found (The user screwed up \texttt{\$PATH})
-  \item<4->errors propagate (no ``exceptions'' unless forced)
-  \item<4->Bonus: \texttt{/bin/bash} is not standard! Only \texttt{/bin/sh} is.
+  \item mkdir or grep not found (The user screwed up \texttt{\$PATH})
+  \item errors propagate (no ``exceptions'' unless forced)
+  \item Bonus: \texttt{/bin/bash} is not standard! Only \texttt{/bin/sh} is.
     There are systems that don't have \texttt{/bin/bash}
 \end{itemize}
 }
@@ -486,7 +487,7 @@ make install DESTDIR="/path/to/your/rootfs"
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Core concepts Regarding Docker}
+\begin{frame}{Core Concepts Regarding Docker}
   \begin{itemize}
     \item A \textit{container} is a process managed by docker with its own view of the
       filesystem and network. (\texttt{docker run})
@@ -495,6 +496,13 @@ make install DESTDIR="/path/to/your/rootfs"
     \item You can also execute commands inside a running container like an
       interactive shell (\texttt{docker exec})
     \item Live Demo! (Image pull, container start, monitoring, deletion)
+  \end{itemize}
+  For this assignment, there will be:
+  \begin{itemize}
+    \item Two images (builder, grader)
+    \item Four long-running containers (one for each part, you will run your
+      scripts here)
+    \item Two ephemeral containers (grading)
   \end{itemize}
 \end{frame}
 
