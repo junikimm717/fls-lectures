@@ -12,6 +12,7 @@
     \item Understand what a build pipeline should do and what invariants it must respect
     \item Understand C compilation pipelines, environment variables, and the
       most common options to pass to the C compiler.
+    \item \textbf{Reminder: Do Attendance!}
   \end{itemize}
 \end{frame}
 
@@ -280,6 +281,22 @@ hello world!
 Note: glibc static linking is not really supported.
 \end{frame}
 
+\begin{frame}[fragile]{More Libc Linking}
+  Slide reserved for live demo with docker image \texttt{lecture2}.
+\begin{lstlisting}[language=c]
+// helloworld.c
+#include<stdio.h>
+int main() {printf("hello world!\n");}
+\end{lstlisting}
+I have prepared a musl-based gentoo root filesystem at /src/rootfs.
+\begin{lstlisting}
+$ gcc -static helloworld.c -o helloworld-glibc
+$ gcc -nostdinc -I/src/rootfs/usr/include -L/src/rootfs/usr/include -static helloworld.c -o helloworld-musl
+$ strings helloworld-glibc
+$ strings helloworld-musl
+\end{lstlisting}
+\end{frame}
+
 \begin{frame}{Kernel User Space Headers}
 \begin{itemize}
   \item The Linux kernel provides a set of headers intended for \textbf{userspace}
@@ -306,8 +323,6 @@ Note: glibc static linking is not really supported.
     \item Reproduce everything into a script that follows our guidelines.
   \end{enumerate}
 \end{frame}
-
-\section{Up Next}
 
 \begin{frame}{Up Next}
   \begin{itemize}
