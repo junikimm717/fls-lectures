@@ -19,7 +19,7 @@
   Build script behavior should be invariant to:
   \begin{itemize}
     \item The program invoker's working directory (no relative path in your
-      program should be undefined)
+      program should be undefined unless that is what you want)
     \item External environment variables (unless explicitly specified as a
       parameter)
     \item Filesystem state across multiple runs
@@ -237,7 +237,8 @@ You should also consult the handout about make to understand how to write Makefi
     \item We will be using musl (simpler + friendly to static linking) for our
       static system.
     \item You need to control your compile flags, environment variables, and
-      options so glibc doesn't accidentally become a dependency in your binary.
+      options so you don't put glibc headers and libraries as dependencies (you
+      want musl dependencies).
     \item Binary linked against glibc $\rightarrow$ kaboom
   \end{itemize}
 \end{frame}
@@ -276,8 +277,7 @@ chroot: failed to run command '/dynamic': No such file or directory
 $ chroot . /static
 hello world!
 \end{lstlisting}
-Note: glibc static linking works here, but glibc basically gave up on supporting
-that
+Note: glibc static linking is not really supported.
 \end{frame}
 
 \begin{frame}{Kernel User Space Headers}
