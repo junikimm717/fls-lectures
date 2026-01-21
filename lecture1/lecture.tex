@@ -335,12 +335,10 @@ Environment Variables are:
 tester.sh
 \begin{lstlisting}[language=bash]
 DIR="$(realpath "$(dirname "$0" )" )"
-
 # regular bash variable (will not get exported)
 MYENV=hello
 # an environment variable
 export MYENV2=hello2
-
 "$DIR/reader.sh"
 \end{lstlisting}
 reader.sh
