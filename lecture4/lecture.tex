@@ -32,7 +32,7 @@
 
 \begin{frame}{The FHS (Again)}
   The root filesystem needs to follow the filesystem hierarchy standard even
-  more strictly than the rootfs.
+  more strictly than the initramfs.
   \begin{block}{You need these:}
     \begin{itemize}
       \item \texttt{/usr/bin}, \texttt{/usr/share}, \texttt{/usr/include}
@@ -51,6 +51,7 @@
     \item Mounts filesystems
     \item Spin up daemons
     \item Maybe other functionality too
+    \item If PID 1 Fails, \textbf{The Kernel will panic!}
   \end{itemize}
   \begin{exampleblock}{Examples of Init}
     \begin{itemize}
@@ -82,6 +83,7 @@
   \begin{itemize}
     \item The most basic way in which the operating system regulates access to
       privileged resources.
+    \item User names and Group names are really aliases for integer UID's and GID's
     \item You only need to have \texttt{root} and \texttt{dhcpcd} (see handout
       for more info on dhcpcd)
     \item Root is all-powerful, generally avoid being root because you can break

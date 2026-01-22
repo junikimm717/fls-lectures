@@ -16,6 +16,7 @@
     \item host-target distinction
     \item Careful manipulation of env vars and options to force the compiler to
     produce target-correct binaries.
+    \item \textbf{Reminder: Do Attendance!}
   \end{itemize}
 \end{frame}
 
@@ -34,6 +35,18 @@
   qemu actually works.
 \end{frame}
 
+\begin{frame}{QEMU Simulates An Entire Board}
+  The CPU arch is not the only thing to consider!
+  \begin{itemize}
+    \item The CPU
+    \item UART device (console output)
+    \item Firmware
+    \item Network Card
+    \item Disks
+    \item Memory
+  \end{itemize}
+  The kernel needs to be able to interface with all of these!
+\end{frame}
 
 \section{Kernel related things}
 
@@ -46,7 +59,7 @@
       bugs). Gets information through syscalls, talks with other processes via
       IPC orchestrated by the kernel, \dots
     \item There are (non-commercial) operating systems that run everything in
-      kernel mode :)
+      kernel mode (e.g. TempleOS)
   \end{itemize}
 \end{frame}
 
@@ -84,7 +97,8 @@
   \begin{block}{Key Properties}
     \begin{itemize}
       \item Parsed very early during kernel initialization.
-      \item Exposed to userspace at \texttt{/proc/cmdline}.
+      \item Exposed to userspace at \texttt{/proc/cmdline} (assuming you mounted
+        your procfs there).
       \item Typos usually fail silently.
     \end{itemize}
   \end{block}
@@ -100,13 +114,20 @@
     \item The kernel does \emph{not} print anywhere unless a console is registered
     \item Consoles are selected by name via \texttt{console=<tty>} on the kernel command line
     \item Passing a non-existent console (e.g. \texttt{ttyAMA0} on an x86 board)
-      results in silence 
+      results in silence
     \item QEMU emulates serial hardware; the kernel must include the driver
     \item \texttt{/dev/console} points to whatever console the kernel chose
   \end{itemize}
 \end{frame}
 
 \begin{frame}{The Kernel as an EFI Stub}
+  So how could we start the kernel?
+  \begin{itemize}
+    \item Use QEMU's ``firmware'' to manually launch a kernel with some command
+      line
+    \item Use a bootloader (GRUB, systemd-boot, etc.) to launch the kernel
+    \item Launch the kernel via UEFI Firmware
+  \end{itemize}
   \begin{itemize}
     \item Getting ahead, but important to prevent you from recompiling kernel
       later on.
@@ -145,7 +166,6 @@
       \texttt{df -Th} (see all filesystems)
   \end{itemize}
 \begin{lstlisting}[language=bash]
-
 mount -t devtmpfs devtmpfs /dev
 mount -t sysfs sys /sys
 mount -t tmpfs run /run
@@ -193,6 +213,7 @@ mount /dev/vda2 /mnt
     \item E.g. when used as an EFI stub
     \item Can't rely on an external initramfs archive, must have all contents in
       the kernel binary.
+    \item There is no filesystem!
     \item Options in the kernel let you do this (see handout).
   \end{itemize}
 \end{frame}
