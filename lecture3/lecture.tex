@@ -61,6 +61,15 @@
     \item There are (non-commercial) operating systems that run everything in
       kernel mode (e.g. TempleOS)
   \end{itemize}
+  In Linux, the entire ``operating system'' resides in the kernel.
+  \begin{itemize}
+    \item IPC and Virtual Memory (On All Kernels)
+    \item Filesystem
+    \item Device Drivers
+    \item Networking
+    \item Other cool stuff like virtualization, containers, \dots
+  \end{itemize}
+  Just important to note for configuration
 \end{frame}
 
 \begin{frame}{Compiling the Linux Kernel}
@@ -71,8 +80,15 @@
       things correspond to
     \item There is no \texttt{make install}; you just extract out the kernel
       image from the build tree.
-    \item Live Demo!
   \end{itemize}
+  Device Drivers:
+  \begin{itemize}
+    \item You are welcome to eliminate as many of them as you can find. Almost
+      all of them will be useless for this class.
+    \item You should however not remove drivers for the UART devices (see
+      handouts) and the network card.
+  \end{itemize}
+  Live Demo of Kernel Config!
 \end{frame}
 
 \begin{frame}[t]{Kernel Module System}
@@ -118,6 +134,8 @@
     \item QEMU emulates serial hardware; the kernel must include the driver
     \item \texttt{/dev/console} points to whatever console the kernel chose
   \end{itemize}
+  If you are really curious about what is happening, feel free to go spelunking
+  in \texttt{/sys/class/tty/<ttyName>}!
 \end{frame}
 
 \begin{frame}{The Kernel as an EFI Stub}
@@ -189,9 +207,10 @@ mount /dev/vda2 /mnt
       \item \texttt{/dev/zero} - stream of zero bits
       \item \texttt{/dev/null} - black hole (used in scripts to throw away
         output)
-      \item \texttt{/dev/vda, /dev/vda1, \dots} - what your drive will appear
-        as
+      \item \texttt{/dev/vda, /dev/vda1, \dots} - what your on-disk block
+        devices will appear.
     \end{itemize}
+    Live demo of device files!
   \end{block}
 \end{frame}
 
@@ -205,6 +224,15 @@ mount /dev/vda2 /mnt
     \item This gives you the opportunity to mount filesystems and switch root to
       a filesystem on your disk (later lecture!).
   \end{itemize}
+  \begin{block}{More about PID's}
+    \begin{itemize}
+      \item Each process gets a unique process ID.
+      \item When a parent process dies, the child processes all die.
+        \textbf{note: briefly cover fork}
+      \item The kernel will just load up PID 1 and let it do everything else.
+      \item PID 1 must never exit.
+    \end{itemize}
+  \end{block}
 \end{frame}
 
 \begin{frame}{Embedding an initramfs}
@@ -213,7 +241,7 @@ mount /dev/vda2 /mnt
     \item E.g. when used as an EFI stub
     \item Can't rely on an external initramfs archive, must have all contents in
       the kernel binary.
-    \item There is no filesystem!
+    \item There is no filesystem if the kernel bootstraps itself!
     \item Options in the kernel let you do this (see handout).
   \end{itemize}
 \end{frame}
@@ -232,7 +260,7 @@ mount /dev/vda2 /mnt
 # /dev/vda2 is the device representing our root filesystem.
 /bin/mount /dev/vda2 /mnt
 # /mnt/sbin/init is a proper PID 1.
-exec switch_root /mnt /sbin/init
+# you now run the switch_root here.
 \end{lstlisting}
 \end{frame}
 
