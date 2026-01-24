@@ -7,8 +7,6 @@
 
 \maketitle
 
-% make sure you cover boot levels, especially in init.
-
 \begin{frame}{From Previous Lectures}
   \begin{itemize}
     \item Build shell scripts with predictable behavior in spite of:
@@ -19,6 +17,35 @@
       \end{itemize}
     \item The kernel unpacks an initramfs, which is purely in memory. We mount
       our disk, then \texttt{switch\_root}.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Pointers and Strategies}
+  \begin{itemize}
+    \item Debugging things in this class can be incredibly difficult!
+    \item Are your archives laid out correctly?
+    \item Are all your set paths correct?
+    \item Are your binaries not broken?
+    \item Is your kernel not misconfigured (no networking, bad cmdline, ...)?
+    \item Are your environment variables correct?
+  \end{itemize}
+  Always think:
+  \begin{itemize}
+    \item Where are the possible points of failure in system bring up?
+    \item How could I try checking whether this is a point of failure?
+    \item Is there something evil hiding in the logs? (When make or configure
+      fails)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Note Permissions!}
+  \begin{itemize}
+    \item Your entire filesystem will be locked down in grading.
+    \item \texttt{/workspace} will be read-only
+    \item Only \texttt{\$DIST} will be readable.
+    \item You should be doing out of tree builds.
+    \item There are scripts on the repo to help you test this! Consult the
+      README for more details.
   \end{itemize}
 \end{frame}
 
@@ -43,6 +70,17 @@
     \end{itemize}
   \end{block}
   In effect, a near-superset of your initramfs tree.
+\end{frame}
+
+\begin{frame}{/etc}
+  \begin{itemize}
+    \item Important system configuration files will be put here.
+    \item PID 1 configuration
+    \item daemon configuration
+    \item filesystem mount points (fstab)
+    \item ... (more files in complex systems)
+  \end{itemize}
+  We recommend you inject these into your user filesystem once figured out!
 \end{frame}
 
 \begin{frame}{PID 1}
@@ -78,6 +116,26 @@
       \item Invoked automatically by \texttt{init}
     \end{itemize}
   \end{exampleblock}
+\end{frame}
+
+\begin{frame}{Boot Levels}
+  BusyBox init runs programs in phases.
+  \begin{block}{Important boot stages}
+    \begin{itemize}
+      \item \texttt{sysinit} — run once, very early
+        \begin{itemize}
+          \item Mount \texttt{/proc}, \texttt{/sys}, \texttt{/dev}
+          \item Prepare runtime directories
+        \end{itemize}
+      \item \texttt{respawn} — long-running services
+        \begin{itemize}
+          \item \texttt{getty}, login shells
+          \item Restarted automatically if they die
+        \end{itemize}
+      \item \texttt{shutdown} — cleanup operations on poweroff/reboot
+    \end{itemize}
+  \end{block}
+  You should think about ordering very clearly. If sysinit fails, you're cooked.
 \end{frame}
 
 \begin{frame}{Configuring Users and Groups}
@@ -162,14 +220,14 @@
     \begin{itemize}
       \item Standard Linux filesystem
       \item Journaling (crash recovery)
-      \item Allows for permissions
+      \item Allows for permissions, other complex metadata
     \end{itemize}
   \end{block}
   \begin{block}{VFat}
     \begin{itemize}
       \item Readable by EFI Firmware
       \item Much simpler, no permissions or even symlinks!
-      \item We will put just the kernel in a special path.
+      \item We will put just the kernel in a special path in this filesystem.
     \end{itemize}
   \end{block}
 \end{frame}
@@ -218,11 +276,8 @@
 
 \begin{frame}{Up Next}
   \begin{itemize}
-    \item Lab hours on Tuesday 1-5PM!
-    \item Thursday's lecture will not feature topics critical to the completion
-      of your assignment!
-    \item Some straggling topics: DNS
-    \item Topics beyond the lab: Graphical Environments, Dbus, Certificates, \dots
+    \item Topics beyond the lab: Graphical Environments, Dbus, Certificates,
+      DNS, \dots
     \item Course Wrap-up, final lab hours
   \end{itemize}
 \end{frame}
