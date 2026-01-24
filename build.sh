@@ -1,20 +1,16 @@
 #!/bin/sh
-
 set -eu
 
-DIR="$(realpath "$(dirname "$0" )" )"
-
+DIR="$(realpath "$(dirname "$0")")"
 cd "$DIR"
 
 mkdir -p "$DIR/dist"
 
 cp "$DIR/index.html" "$DIR/dist/"
+pandoc -o "$DIR/dist/6s913_syllabus.pdf" "$DIR/syllabus.md" &
 
-pandoc -o "$DIR/dist/6s913_syllabus.pdf" "$DIR/syllabus.md"
-
-for i in $(seq 1 5); do (
-  echo "============================"
-  echo "compiling lecture $i..."
+for i in $(seq 1 5); do
+(
   cd "lecture$i"
   make clean
   latexmk -pdf
@@ -22,4 +18,8 @@ for i in $(seq 1 5); do (
     newfile="${file%.pdf}${i}.pdf"
     mv "$file" "$DIR/dist/$newfile"
   done
-) done
+) &
+done
+
+wait
+echo "All lectures compiled."
