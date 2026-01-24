@@ -60,6 +60,23 @@ details on how to use \texttt{debugfs} to accomplish this.
 If these permissions are incorrect, \texttt{dhcpcd} will fail silently or exit
 early during boot.
 
+\subsection{A Known \texttt{eudev} Build Footgun}
+
+Eudev uses a build system that pulls in libtool for linking. As a result, simply
+passing \texttt{-static} to your linker flags will not suffice, and you will
+need to pass in another \texttt{-all-static} flag to force eudev to be linked
+statically.
+
+For more information, you can see the corresponding GitHub issue at
+\url{https://github.com/eudev-project/eudev/issues/230}
+
+If \texttt{eudev} builds successfully but fails at runtime, inspect the
+installed binaries before debugging the kernel or filesystem.
+
+\begin{verbatim}
+readelf -l /usr/bin/udevd | grep interpreter
+\end{verbatim}
+
 \subsection{Configuring user and group files}
 
 Linux systems describe users and groups using plain text configuration files
