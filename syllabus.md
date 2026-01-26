@@ -177,7 +177,7 @@ with questions regarding the `kernel` and `image` section.
 By this point, students should have a compiled and working kernel binary and the
 ability to boot up a kernel into an initramfs.
 
-### Lecture 4 - Monday 1/26 1-3PM
+### Lecture 4 - Tuesday 1/27 1-3PM
 
 - Persistent userspace and filesystem hierarchy
 - Init systems and BusyBox init configuration
@@ -186,7 +186,7 @@ ability to boot up a kernel into an initramfs.
 - Disk images, filesystems, and EFI boot flow
   - GUID Partition Table
 
-### Lab 3 - Tuesday 1/26 1-5PM
+### Lab 3 - Tuesday 1/27 3-5PM
 
 Help will focus on the `image` and `user` sections of the lab.
 

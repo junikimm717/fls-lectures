@@ -38,12 +38,13 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Note Permissions!}
+\begin{frame}{Note Grading Environment Permissions!}
   \begin{itemize}
     \item Your entire filesystem will be locked down in grading.
     \item \texttt{/workspace} will be read-only
     \item Only \texttt{\$DIST} will be readable.
     \item You should be doing out of tree builds.
+    \item Your main build pipeline should not have interactive steps.
     \item There are scripts on the repo to help you test this! Consult the
       README for more details.
   \end{itemize}
@@ -55,6 +56,21 @@
     \item Part 1: User programs, root filesystem, and configuration
     \item Part 2: Partitions and Filesystems
     \item \textbf{Reminder: Do Attendance!}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Initramfs Rootfs Distinction}
+  The Initramfs:
+  \begin{itemize}
+    \item Gets archived as a cpio.gz file and embedded into the kernel
+    \item Unpacked by the kernel at startup and backed by RAM
+    \item Only real task is to switch to root.
+  \end{itemize}
+  The real Rootfs:
+  \begin{itemize}
+    \item Backed up by the disk
+    \item Contains the actual relevant files for your operating system
+    \item What you will be focusing on in the next few labs
   \end{itemize}
 \end{frame}
 
@@ -109,7 +125,7 @@
       shutdown, \dots)
     \item Long-running services must be restarted if they die
   \end{itemize}
-  \begin{exampleblock}{Startup scripts}
+  \begin{exampleblock}{Startup scripts (See next slide)}
     \begin{itemize}
       \item Typically a script like \texttt{/etc/init.d/rcS}
       \item Responsible for mounting filesystems and starting daemons
@@ -158,7 +174,7 @@
   \end{block}
 \end{frame}
 
-\section{Important userspace daemons}
+\section{Important Userspace Daemons}
 
 \begin{frame}{Dhcpcd}
   \begin{itemize}
@@ -219,7 +235,7 @@
   \begin{block}{Ext4}
     \begin{itemize}
       \item Standard Linux filesystem
-      \item Journaling (crash recovery)
+      \item Journaling (crash recovery), some papers about this!
       \item Allows for permissions, other complex metadata
     \end{itemize}
   \end{block}
@@ -252,7 +268,8 @@
 \begin{frame}{Before we keep moving}
   There are some toolchain constraints in the assignment!
   \begin{itemize}
-    \item We will use filesystem debug tools and \texttt{sgdisk}
+    \item We will use filesystem debug tools and \texttt{sgdisk} to adjust
+      metadata and partition layouts.
     \item LFS manuals will often get you to create a loopback device, which is
       impossible inside a docker container.
     \item If you attempt to copy files into filesystems via loopback devices,
