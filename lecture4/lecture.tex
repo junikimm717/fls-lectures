@@ -27,7 +27,9 @@
     \item Are all your set paths correct?
     \item Are your binaries not broken?
     \item Is your kernel not misconfigured (no networking, bad cmdline, ...)?
+    \item Are your config files not misconfigured?
     \item Are your environment variables correct?
+    \item Are your file permissions correct?
   \end{itemize}
   Always think:
   \begin{itemize}
@@ -47,6 +49,22 @@
     \item Your main build pipeline should not have interactive steps.
     \item There are scripts on the repo to help you test this! Consult the
       README for more details.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Final Note Re Integrity}
+  Permitted:
+  \begin{itemize}
+    \item Discussing ideas, design choices, and debugging strategies
+    \item Reading documentation, blog posts, and reference material
+    \item Using AI tools to explain errors or suggest approaches
+  \end{itemize}
+
+  \textbf{However, the assignment must reflect your own reasoning.} Do not:
+  \begin{itemize}
+    \item copy another student's root filesystem, disk image, or VM
+    \item reuse configuration files (\texttt{/etc/*}, init scripts, etc.) verbatim
+    \item start from someone else's working system and modify it
   \end{itemize}
 \end{frame}
 
@@ -94,6 +112,7 @@
     \item PID 1 configuration
     \item daemon configuration
     \item filesystem mount points (fstab)
+    \item Package manager config files (not in this class)
     \item ... (more files in complex systems)
   \end{itemize}
   We recommend you inject these into your user filesystem once figured out!
@@ -110,7 +129,7 @@
   \end{itemize}
   \begin{exampleblock}{Examples of Init}
     \begin{itemize}
-      \item Busybox init (we will use this for simplicity)
+      \item Busybox init (We use this for simplicity)
       \item Systemd (popular but controversial!)
       \item OpenRC, runit
     \end{itemize}
@@ -119,6 +138,7 @@
 
 \begin{frame}{Configuring PID 1}
   \begin{itemize}
+    \item Taken from conventions of System V UNIX (released 1983)
     \item This is \textit{one} of many ways init systems can be configured
     \item \texttt{/etc/inittab} describes \emph{what} should run and \emph{when}
     \item Entries can be one-shot, respawned, or tied to boot stages (startup,
@@ -151,7 +171,7 @@
       \item \texttt{shutdown} — cleanup operations on poweroff/reboot
     \end{itemize}
   \end{block}
-  You should think about ordering very clearly. If sysinit fails, you're cooked.
+  You should think about ordering very clearly.
 \end{frame}
 
 \begin{frame}{Configuring Users and Groups}
@@ -246,10 +266,12 @@
       \item We will put just the kernel in a special path in this filesystem.
     \end{itemize}
   \end{block}
+  There are obviously other filesystems out there, but these are most standard.
 \end{frame}
 
 \begin{frame}{GPT}
   \begin{itemize}
+    \item You want partitions to have different filesystems on the same disk.
     \item GUID Partition Table (replaces MBR)
     \item A standardized partition table format
     \item Unique identifiers for each partition
@@ -257,9 +279,11 @@
   \end{itemize}
   \begin{block}{Regarding Firmware}
     \begin{itemize}
-      \item Firmware reads metadata at the front of the disk
+      \item Firmware reads metadata at the front of the disk (sectors 1-33)
       \item Special partition types signal boot-related data
       \item The EFI System Partition (ESP) is identified this way
+      \item For legacy BIOS, sector 0 is just executed. (+ checking last
+        two bytes are \texttt{0x55AA})
     \end{itemize}
   \end{block}
   You should consult the handout for further info!
