@@ -173,12 +173,32 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{GUI on Linux}
+\begin{frame}{Virtualization}
   \begin{itemize}
+    \item You used some of these tools for your dev environment!
+    \item Linux has cgroups and namespaces that are used as primitives for
+      building up containers
+    \item CGroups: limit memory, cpu usage, \dots
+    \item Namespaces: process gets own view of filesystem, PID (so it might
+      think it is true init), networking, \dots
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{GUI on Linux}
+  Display:
+  \begin{itemize}
+    \item The kernel exposes drm for displays (/dev/dri), userspace libraries
+      for interacting with that
     \item X11 display protocol (+ x.org server)
     \item Window managers on top of the x.org server
     \item Wayland (replacing xorg on desktop)
   \end{itemize}
+  Sound:
+  \begin{itemize}
+    \item Kernel exposes the sound card via ALSA (/dev/snd)
+    \item Standard solutions are pulseaudio and pipewire.
+  \end{itemize}
+  Device registration gets handled by both the kernel and udev.
 \end{frame}
 
 \begin{frame}{Up Next}
